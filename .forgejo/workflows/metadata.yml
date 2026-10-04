@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Bootstrap pinned tools and source credentials
-        uses: ./.forgejo/workflows/source-access
+        uses: ./.forgejo/source-access
         with:
           source-key: ${{ secrets.TENSAMIN_SOURCE_SSH_KEY }}
           known-hosts: ${{ vars.TENSAMIN_SSH_KNOWN_HOSTS }}
