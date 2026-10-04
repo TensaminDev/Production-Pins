@@ -36,7 +36,16 @@ runs:
         umask 077
         home="$RUNNER_TEMP/tensamin-source"
         mkdir -p "$home/.ssh"
-        printf '%s\n' "$SOURCE_KEY" > "$home/.ssh/key"
+        if [[ -z $SOURCE_KEY ]]; then
+          echo 'TENSAMIN_SOURCE_SSH_KEY is empty or unavailable to this repository workflow.' >&2
+          exit 1
+        fi
+        # Secret forms can preserve CRLF line endings from pasted key files.
+        printf '%s\n' "${SOURCE_KEY//$'\r'/}" > "$home/.ssh/key"
+        if ! ssh-keygen -y -P '' -f "$home/.ssh/key" >/dev/null 2>&1; then
+          echo 'TENSAMIN_SOURCE_SSH_KEY is not a valid unencrypted SSH private key. Verify the original file with ssh-keygen -y -P "" -f FILE, then replace the repository Actions secret with that file.' >&2
+          exit 1
+        fi
         printf '%s\n' "$KNOWN_HOSTS" > "$home/.ssh/known_hosts"
         printf 'Host *\n  IdentityFile "%s/.ssh/key"\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n  UserKnownHostsFile "%s/.ssh/known_hosts"\n  BatchMode yes\n' "$home" "$home" > "$home/.ssh/config"
         # An agent also supports Nix versions using libgit2 instead of Git's SSH command.
