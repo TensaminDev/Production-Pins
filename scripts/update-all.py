@@ -1,15 +1,15 @@
 """Refresh the shared sources, transformed locks, and fixed-output hashes."""
 
 import argparse
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 
 def run(*args, **kwargs):
-    result = subprocess.run(args, text=True, **kwargs)
+    result = subprocess.run(args, text=True, check=False, **kwargs)
     if result.returncode:
         raise SystemExit(result.stderr if kwargs.get("capture_output") else result.returncode)
     return result
@@ -60,7 +60,7 @@ for key, output in [(n, f"{n}-vendor") for n in ["mtp", "iota", "omikron", "omeg
     text = re.sub(rf'({key} = ")[^"]+', rf'\g<1>sha256-{"A" * 43}=', text)
     hash_file.write_text(text)
     result = subprocess.run(["nix", "build", f"path:{root}#packages.{system}.{output}",
-                             "--no-link", "--print-out-paths", *overrides], text=True, capture_output=True)
+                             "--no-link", "--print-out-paths", *overrides], text=True, capture_output=True, check=False)
     match = re.search(r"got:\s+(sha256-[A-Za-z0-9+/=]+)", result.stderr)
     if not match:
         hash_file.write_text(original)

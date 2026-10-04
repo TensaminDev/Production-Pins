@@ -7,7 +7,10 @@ case ${1:?} in
         pnpm run ci
         electron_arch=x64
         [[ $RELEASE_ARCH != aarch64 ]] || electron_arch=arm64
+        package_name=tensamin
+        [[ $TENSAMIN_CHANNEL == stable ]] || package_name="tensamin-$TENSAMIN_CHANNEL"
         pnpm --dir apps/electron exec electron-builder --config electron-builder.config.cjs \
+            --config.deb.packageName="$package_name" --config.rpm.packageName="$package_name" \
             --linux --"$electron_arch" --publish never
         pnpm run copy-releases
         for asset in releases/*; do
