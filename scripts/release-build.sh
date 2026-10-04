@@ -8,6 +8,10 @@ out=$(realpath -m "${2:?Output directory required}")
 mkdir -p "$out"
 export TENSAMIN_CHANNEL=$channel ELECTRON_SKIP_BINARY_DOWNLOAD=1
 export TENSAMIN_ANDROID_VERSION_CODE=${RELEASE_SEQUENCE:?Release sequence required}
+# The runner shares memory with production services. Bound concurrent builds.
+export NIX_CONFIG="${NIX_CONFIG:-}
+max-jobs = 1
+cores = 2"
 system=${3:-$(nix eval --impure --raw --expr 'builtins.currentSystem')}
 expr="import $root/scripts/release-env.nix { root = builtins.toPath \"$root\"; kind = \"packages\"; channel = \"$channel\"; system = \"$system\"; }"
 nix build --impure --no-link --expr "import $root/scripts/release-env.nix { root = builtins.toPath \"$root\"; kind = \"checks\"; system = \"$system\"; }"
