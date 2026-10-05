@@ -243,9 +243,22 @@ def update_pointer(api, directory, channel, tag):
 
 
 def select(tag):
+    api = Forgejo()
+    if not tag:
+        revision = run("git", "rev-parse", "HEAD")
+        candidates = []
+        for page in range(1, 100):
+            releases = api.request(f"/releases?limit=50&page={page}")
+            candidates.extend(release["tag_name"] for release in releases
+                              if not release["draft"] and release["prerelease"]
+                              and re.fullmatch(rf"canary-{revision}-[0-9]+", release["tag_name"]))
+            if len(releases) < 50:
+                break
+        if not candidates:
+            raise RuntimeError(f"Commit {revision} has no published canary. Wait for its canary workflow to succeed before starting stable.")
+        tag = max(candidates, key=lambda candidate: int(candidate.rsplit("-", 1)[1]))
     if not re.fullmatch(r"canary-[0-9a-f]{40}-[0-9]+", tag):
         raise ValueError("Select an immutable canary tag")
-    api = Forgejo()
     release = api.release(tag)
     data = json.loads(api.download(release, "release.json"))
     if release["draft"] or not release["prerelease"] or data["channel"] != "canary" or data["tag"] != tag:

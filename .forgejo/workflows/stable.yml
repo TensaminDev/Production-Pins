@@ -2,11 +2,6 @@ name: Stable release
 
 on:
   workflow_dispatch:
-    inputs:
-      canary_tag:
-        description: Successful immutable canary tag to promote
-        type: string
-        required: true
 
 concurrency:
   group: tensamin-central-releases
@@ -45,15 +40,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ forgejo.sha }}
       - name: Bootstrap pinned tools and source credentials
         uses: ./.forgejo/source-access
         with:
           source-key: ${{ secrets.TENSAMIN_SOURCE_SSH_KEY }}
           known-hosts: ${{ vars.TENSAMIN_SSH_KNOWN_HOSTS }}
       - name: Select successful canary for stable
-        env:
-          CANARY_TAG: ${{ inputs.canary_tag }}
-        run: python3 scripts/release.py select --tag "$CANARY_TAG"
+        run: python3 scripts/release.py select
       - name: Set immutable release identity
         run: |
           set -euo pipefail

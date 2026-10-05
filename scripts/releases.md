@@ -2,8 +2,9 @@
 
 Only prod-pins publishes releases. Pushes to main and manual canary runs validate
 the locked, prepared Rust and client sources, then build combined immutable
-releases. Stable dispatch requires an immutable `canary-FULL_PROD_SHA-RUN_ID` tag
-whose central workflow completed successfully. Promotion checks out that exact
+releases. Stable dispatch automatically selects a published canary for the exact
+commit selected at dispatch and verifies its workflow completed successfully.
+If that commit has no successful canary, stable fails before building. Promotion checks out that exact
 prod-pins revision, including dependency locks and hashes. It rebuilds with stable
 client branding. No input update command runs during promotion.
 
