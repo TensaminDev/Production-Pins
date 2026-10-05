@@ -18,6 +18,14 @@ jobs:
       FORGEJO_REPOSITORY: ${{ forgejo.repository }}
       FORGEJO_RUN_ID: ${{ forgejo.run_id }}
       RELEASE_CHANNEL: canary
+      NIXOS_FLAKE_REPOSITORY: ${{ vars.NIXOS_FLAKE_REPOSITORY }}
+      NIXOS_FLAKE_BRANCH: ${{ vars.NIXOS_FLAKE_BRANCH || 'main' }}
+      NIXOS_FLAKE_WRITE_TOKEN: ${{ secrets.NIXOS_FLAKE_WRITE_TOKEN }}
+      TENSAMIN_CANARY_DEPLOY_SSH_KEY: ${{ secrets.TENSAMIN_CANARY_DEPLOY_SSH_KEY }}
+      TENSAMIN_CANARY_DEPLOY_HOST: ${{ vars.TENSAMIN_CANARY_DEPLOY_HOST }}
+      TENSAMIN_CANARY_DEPLOY_PORT: ${{ vars.TENSAMIN_CANARY_DEPLOY_PORT || '22' }}
+      TENSAMIN_CANARY_DEPLOY_JUMP_HOST: ${{ vars.TENSAMIN_CANARY_DEPLOY_JUMP_HOST }}
+      TENSAMIN_CANARY_DEPLOY_JUMP_PORT: ${{ vars.TENSAMIN_CANARY_DEPLOY_JUMP_PORT || '7930' }}
       RELEASE_TOKEN: ${{ secrets.TENSAMIN_RELEASE_TOKEN }}
       FORGEJO_REGISTRY_USER: ${{ vars.TENSAMIN_REGISTRY_USER }}
       IOTA_RELEASE_SIGNING_KEY: ${{ secrets.IOTA_RELEASE_SIGNING_KEY }}
@@ -74,9 +82,9 @@ jobs:
       - name: Stage and verify draft attachments
         run: |
           nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts stage --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
-      - name: Publish canary and update channel pointers
+      - name: Deploy canary, check health and publish channel pointers
         run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts publish --channel canary --tag "$RELEASE_TAG"
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/deploy-release.ts
       - name: Remove source credentials
         if: always()
         run: |

@@ -60,6 +60,14 @@ unreachable server fails visibly and needs operator recovery.
 
 ## Artifacts and channels
 
+Canary builds deploy `tensamin-canary` before publishing, using the independent
+infrastructure `canary-pins` lock. Configure `TENSAMIN_CANARY_DEPLOY_SSH_KEY`
+and the `TENSAMIN_CANARY_DEPLOY_HOST`, `TENSAMIN_CANARY_DEPLOY_PORT`,
+`TENSAMIN_CANARY_DEPLOY_JUMP_HOST` and `TENSAMIN_CANARY_DEPLOY_JUMP_PORT`
+variables. The jump account is `deploy-canary-jump`. Include the verified canary
+guest host key in `TENSAMIN_SSH_KNOWN_HOSTS`. Failure restores the canary generation
+and pin. Production continues consuming its separate stable pin.
+
 Each immutable release contains:
 
 - `release.json`, exact prod-pins revision, source lock identities, workflow run,
