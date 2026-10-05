@@ -63,6 +63,10 @@ if kind == "tools" then pkgs.mkShell {
   packages = with pkgs; [ nix git (python3.withPackages (p: [ p.pyyaml ])) bash coreutils jq zip gnutar gzip openssh skopeo shellcheck ruff ];
 } else if kind == "electron" || kind == "tauri" then
   clientTools.devShells.${system}.${kind}.overrideAttrs (old: {
+    buildInputs = builtins.filter (package: !(pkgs.lib.hasPrefix "corepack" (package.pname or "")))
+      (old.buildInputs or []) ++ [ pkgs.pnpm ];
+    nativeBuildInputs = builtins.filter (package: !(pkgs.lib.hasPrefix "corepack" (package.pname or "")))
+      (old.nativeBuildInputs or []);
     shellHook = builtins.replaceStrings
       [ ''cd "$workRoot/tensamin/client"'' ]
       [ ''cd "''${RELEASE_WORK:-$workRoot/tensamin/client}"'' ]
