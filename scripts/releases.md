@@ -29,7 +29,7 @@ Configure repository variables:
 - `IOTA_RELEASE_PUBLIC_KEY`, pinned public key, 64 hex characters.
 - `IOTA_RELEASE_SIGNING_KEY_ID`, default `primary`.
 - `IOTA_BASE_VERSION`, default `0.1.0`.
-- `FORGEJO_REGISTRY_USER`, token owner's Forgejo username.
+- `TENSAMIN_REGISTRY_USER`, token owner's Forgejo username.
 - `NIXOS_FLAKE_REPOSITORY`, infrastructure repository as `owner/repository`.
 - `NIXOS_FLAKE_BRANCH`, default `main`.
 - `TENSAMIN_PROD_DEPLOY_HOST`, deployment SSH hostname.
