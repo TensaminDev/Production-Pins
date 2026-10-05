@@ -78,6 +78,11 @@ returns `packages` and `devShells`, and accepts a replacement `hashes` attrset.
 Dependency-changing overrides require regenerated locks and vendor hashes.
 Use `update-all` in a disposable checkout with the desired input overrides.
 
+Source preparation, dependency updates, and release scripts use Bun from the
+central nixpkgs lock, including its built-in TOML and YAML parsers. They fetch no
+runtime dependencies. Validate scripts with `bash scripts/check.sh` in the
+`scripts/release-env.nix` tools shell.
+
 ```sh
 nix run .#update-all -- --no-update --override-input iota path:../iota
 ```

@@ -38,7 +38,7 @@ jobs:
           revision=$(git rev-parse HEAD)
           for channel in stable canary; do
             git checkout --detach "$revision"
-            nix develop --impure --expr "import $root/scripts/release-env.nix { root = builtins.toPath \"$root\"; }" --command python3 scripts/release.py refresh --channel "$channel" --directory "$RUNNER_TEMP/refresh-$FORGEJO_RUN_ID-$channel"
+            nix develop --impure --expr "import $root/scripts/release-env.nix { root = builtins.toPath \"$root\"; }" --command bun scripts/release.ts refresh --channel "$channel" --directory "$RUNNER_TEMP/refresh-$FORGEJO_RUN_ID-$channel"
           done
       - name: Remove source credentials
         if: always()

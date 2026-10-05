@@ -51,7 +51,7 @@ both hops, including rollback deployment.
 The infrastructure forced command must accept `<nixos-flake commit SHA>`, fetch
 and deploy precisely that commit, validate its prod-pins lock, and return success
 only after activation and application health checks. It must restore the prior
-system and checkout on failure. `deploy-release.py` deliberately rejects the old
+system and checkout on failure. `deploy-release.ts` deliberately rejects the old
 wrapper that accepts `<prod-pins commit SHA>`. It commits only infrastructure
 `flake.lock`, pushes without force, passes that infrastructure commit through SSH,
 then publishes stable. If deployment or publication fails, it reverts the pin
@@ -106,8 +106,7 @@ platform-tools is adjusted to the version available in central nixpkgs.
 ## Local validation
 
 ```sh
-nix develop --impure --expr 'import ./scripts/release-env.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command shellcheck scripts/release-build.sh scripts/release-client.sh
-nix develop --impure --expr 'import ./scripts/release-env.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command ruff check scripts/release.py scripts/deploy-release.py
+nix develop --impure --expr 'import ./scripts/release-env.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bash scripts/check.sh
 ```
 
 Live Forgejo draft uploads, registry writes and deployment are performed only by

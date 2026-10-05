@@ -44,28 +44,14 @@ let
     '';
     passthru.source = inputs.mtp;
   };
-  client-source = pkgs.runCommand "client-source" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+  client-source = pkgs.runCommand "client-source" { nativeBuildInputs = [ pkgs.bun ]; } ''
     cp -r ${inputs.client} "$out"
     chmod -R u+w "$out"
     rm -rf "$out/mtp-type-maps"
     cp -r ${inputs.mtp-type-maps} "$out/mtp-type-maps"
     mkdir -p "$out/.mtp-sdk"
     cp ${inputs.mtp}/sdk/package.json "$out/.mtp-sdk/package.json"
-    python - "$out" <<'PY'
-    import json, sys, os, re
-    from pathlib import Path
-    root = Path(sys.argv[1])
-    workspace = root / 'pnpm-workspace.yaml'
-    workspace.write_text(re.sub(r'^  mtp:.*\n', "", workspace.read_text(), flags=re.M))
-    for path in root.rglob('package.json'):
-        if '.mtp-sdk' in path.parts:
-            continue
-        data = json.loads(path.read_text())
-        for section in ['dependencies', 'devDependencies']:
-            if 'mtp' in data.get(section, {}):
-                data[section]['mtp'] = 'link:' + os.path.relpath(root / '.mtp-sdk', path.parent)
-        path.write_text(json.dumps(data, indent=2) + '\n')
-    PY
+    bun ${../lib}/prepare-client.ts "$out"
     ${lib.optionalString (builtins.pathExists ./locks/client.yaml) ''cp ${./locks/client.yaml} "$out/pnpm-lock.yaml"''}
   '';
   client-deps = pkgs.fetchPnpmDeps {

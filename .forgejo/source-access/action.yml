@@ -23,7 +23,7 @@ runs:
             pkgs = import source { system = builtins.currentSystem; };
           in pkgs.buildEnv {
             name = "release-bootstrap";
-            paths = with pkgs; [ git openssh python3 bash coreutils ];
+            paths = with pkgs; [ git openssh bun bash coreutils ];
           }')
         printf '%s/bin\n' "$tools" >> "$GITHUB_PATH"
     - name: Prepare SSH and checkout fetch credentials

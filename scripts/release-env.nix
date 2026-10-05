@@ -62,7 +62,7 @@ in
 if kind == "tools" then pkgs.mkShell {
   CONTAINERS_POLICY = pkgs.writeText "release-containers-policy.json"
     (builtins.toJSON { default = [{ type = "insecureAcceptAnything"; }]; });
-  packages = with pkgs; [ nix git (python3.withPackages (p: [ p.pyyaml ])) bash coreutils jq zip gnutar gzip openssh skopeo shellcheck ruff ];
+  packages = with pkgs; [ nix git bun bash coreutils jq zip gnutar gzip openssh skopeo shellcheck ];
 } else if kind == "electron" || kind == "tauri" then
   clientTools.devShells.${system}.${kind}.overrideAttrs (old: {
     buildInputs = builtins.filter (package: !(pkgs.lib.hasPrefix "corepack" (package.pname or "")))

@@ -8,9 +8,9 @@ let
   rustPlatform = pkgs.makeRustPlatform { cargo = rust; rustc = rust; };
   projects = [ "iota" "omikron" "omega" "mtp" ];
   prepared = lib.genAttrs projects (name: pkgs.runCommand "${name}-source" {
-    nativeBuildInputs = [ pkgs.python3 ] ++ lib.optional (name == "iota") rust;
+    nativeBuildInputs = [ pkgs.bun ] ++ lib.optional (name == "iota") rust;
   } ''
-    python ${../lib/prepare-source.py} ${name} ${inputs.${name}} ${inputs.mtp} \
+    bun ${../lib}/prepare-source.ts ${name} ${inputs.${name}} ${inputs.mtp} \
       ${inputs.mtp-type-maps} ${inputs.iota} "$out"
     ${lib.optionalString (name == "iota") ''
       rustfmt --edition 2024 "$out/iota-paths/src/lib.rs" "$out/iota-installer/src/lib.rs" "$out/iota-daemon/src/main.rs"
@@ -106,6 +106,11 @@ let
     mtpSource = sources.mtp;
     mtpVendor = vendors.mtp;
   };
+  updateScripts = pkgs.runCommand "update-all-scripts" {} ''
+    mkdir -p "$out/lib" "$out/scripts"
+    cp ${../lib/runtime.ts} "$out/lib/runtime.ts"
+    cp ${../scripts/update-all.ts} "$out/scripts/update-all.ts"
+  '';
   packages = {
     inherit iota;
     iota-portable = iotaPortable;
@@ -180,8 +185,8 @@ let
     default = packages.client;
     update-all = pkgs.writeShellApplication {
       name = "update-all";
-      runtimeInputs = [ pkgs.nix pkgs.git pkgs.python3 rust pkgs.nodejs pkgs.pnpm pkgs.coreutils ];
-      text = ''exec python ${../scripts/update-all.py} "$@"'';
+      runtimeInputs = [ pkgs.nix pkgs.git pkgs.bun rust pkgs.nodejs pkgs.pnpm pkgs.coreutils ];
+      text = ''exec bun ${updateScripts}/scripts/update-all.ts "$@"'';
     };
   } // lib.mapAttrs' (name: value: lib.nameValuePair "${name}-source" value) prepared
     // lib.mapAttrs' (name: value: lib.nameValuePair "${name}-vendor" value) vendors

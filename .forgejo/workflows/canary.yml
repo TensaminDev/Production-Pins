@@ -46,8 +46,7 @@ jobs:
       - name: Check central release scripts
         run: |
           set -euo pipefail
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command shellcheck scripts/release-build.sh scripts/release-client.sh
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command ruff check scripts/release.py scripts/deploy-release.py
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bash scripts/check.sh
       - name: Validate and build all central packages and client assets
         run: |
           nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bash scripts/release-build.sh "$RELEASE_CHANNEL" release-out
@@ -65,8 +64,8 @@ jobs:
       - name: Sign manifests and validate installer bundles
         run: |
           set -euo pipefail
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command python3 scripts/release.py sign --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command python3 scripts/release.py provenance --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts sign --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts provenance --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
       - name: Preserve combined build artifacts
         uses: https://data.forgejo.org/actions/upload-artifact@v3
         with:
@@ -74,10 +73,10 @@ jobs:
           path: release-out/
       - name: Stage and verify draft attachments
         run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command python3 scripts/release.py stage --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts stage --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
       - name: Publish canary and update channel pointers
         run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command python3 scripts/release.py publish --channel canary --tag "$RELEASE_TAG"
+          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts publish --channel canary --tag "$RELEASE_TAG"
       - name: Remove source credentials
         if: always()
         run: |

@@ -26,32 +26,10 @@ let
   sourceConfig =
     if cfg.settingsFile != null then cfg.settingsFile else format.generate "iota-config.yaml" settings;
   configFile = "${cfg.stateDir}/config.yaml";
-  python = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
-  mergeConfig = pkgs.writeText "iota-merge-config.py" ''
-    import os
-    import sys
-    import yaml
-
-    source, destination = sys.argv[1:]
-    with open(source) as stream:
-        settings = yaml.safe_load(stream) or {}
-    if os.path.exists(destination):
-        with open(destination) as stream:
-            previous = yaml.safe_load(stream) or {}
-        # Retain discovery state unless the operator explicitly supplies it.
-        for field in ["iota_id", "omikron_host", "omikron_port", "omikron_id"]:
-            if field not in settings and field in previous:
-                settings[field] = previous[field]
-    temporary = destination + ".new"
-    with open(temporary, "w") as stream:
-        yaml.safe_dump(settings, stream, sort_keys=False)
-    os.chmod(temporary, 0o640)
-    os.replace(temporary, destination)
-  '';
   setup = pkgs.writeShellScript "iota-setup" ''
     set -eu
     umask 077
-    ${python}/bin/python ${mergeConfig} ${lib.escapeShellArg sourceConfig} ${lib.escapeShellArg configFile}
+    ${pkgs.bun}/bin/bun ${../lib/merge-config.ts} ${lib.escapeShellArg sourceConfig} ${lib.escapeShellArg configFile}
     chown iota:iota ${lib.escapeShellArg configFile}
     ${lib.optionalString (cfg.certFile != null) ''
       install -d -m 0700 -o iota -g iota ${lib.escapeShellArg "${cfg.stateDir}/tls"}
