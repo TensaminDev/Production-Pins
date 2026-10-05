@@ -182,7 +182,7 @@ def publish(directory, channel, tag):
         for image in directory.glob("*-image-linux-*.tar.gz"):
             service, arch = image.name.split("-image-linux-")
             arch = arch.removesuffix(".tar.gz")
-            run("skopeo", "copy", "--authfile", str(auth), "docker-archive:" + str(image),
+            run("skopeo", "--policy", os.environ["CONTAINERS_POLICY"], "copy", "--authfile", str(auth), "docker-archive:" + str(image),
                 f"docker://{registry}/{api.repo.split('/')[0]}/{service}:{tag}-{arch}")
         api.request(f"/releases/{immutable['id']}", "PATCH", {"draft": False})
         try:
