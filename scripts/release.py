@@ -252,7 +252,7 @@ def select(tag):
         raise RuntimeError("Not a published canary")
     result = api.request(f"/actions/runs/{data['run_id']}")
     result = result.get("workflow_run", result)
-    if result["conclusion"] != "success" or result["head_sha"] != data["revision"]:
+    if result.get("conclusion", result.get("status")) != "success" or result.get("head_sha", result.get("commit_sha")) != data["revision"]:
         raise RuntimeError("Canary workflow has not completed successfully")
     revision = data["revision"]
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
