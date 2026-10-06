@@ -3,11 +3,11 @@
     "client": {
       "flake": false,
       "locked": {
-        "lastModified": 1791134823,
-        "narHash": "sha256-KlEYoTKdP0yIHODuXGIaAPKlYV+7Z1Prd0r3r7R6wGI=",
+        "lastModified": 1791269746,
+        "narHash": "sha256-4cDrynVQriTR6lQMp1c6jD0TXp8leXettbjANAetlJA=",
         "ref": "dev",
-        "rev": "b5a7246ec7b92d21de22fc53339fd7f7db99edb7",
-        "revCount": 647,
+        "rev": "bc5c34948cfe39e56a708e1e1f5a509d626a307b",
+        "revCount": 648,
         "type": "git",
         "url": "ssh://git@methanium.net/tensamin/client"
       },
