@@ -3,6 +3,6 @@
 Provides pinned versions of the Client, Iota, Omikron, Omega, MTP and MTP type maps.
 This can be used to see the exact versions of the deployed services.
 
-- [Deployment](https://docs.tensamin.net/deployment/)
+- [Iota setup](https://docs.tensamin.net/iota/)
 - [Updates](https://docs.tensamin.net/updates/)
-- [Release guide](https://docs.tensamin.net/developers/releases/)
+- [TAuth](https://docs.tensamin.net/developers/tauth/)
