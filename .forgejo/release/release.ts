@@ -3,7 +3,7 @@ import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSy
 import { basename, join, resolve } from "node:path";
 import { createHash, randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
-import { run } from "../lib/runtime.ts";
+import { run } from "../../packages/runtime.ts";
 
 type Asset = { id: number; name: string; browser_download_url: string };
 type Release = { id: number; tag_name: string; draft: boolean; prerelease: boolean };

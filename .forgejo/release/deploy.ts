@@ -3,7 +3,7 @@ import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
-import { run } from "../lib/runtime.ts";
+import { run } from "../../packages/runtime.ts";
 
 function env(name: string) {
   const value = process.env[name];
@@ -28,7 +28,7 @@ try {
   const checkout = join(root, "infrastructure");
   run(["git", "clone", "--branch", branch, "--single-branch", `${server}/${repository}.git`, checkout], { env: gitEnv });
   const original = run(["git", "rev-parse", "HEAD"], { cwd: checkout });
-  const wrapper = readFileSync(join(checkout, "garten/tensamin-prod/services/deploy.nix"), "utf8");
+  const wrapper = readFileSync(join(checkout, "vm/tensamin-prod/services/deploy.nix"), "utf8");
   if (!wrapper.includes("<nixos-flake commit SHA>")) throw new Error("Deployment wrapper must accept <nixos-flake commit SHA> before promotion");
   const url = `git+ssh://git@methanium.net/${env("FORGEJO_REPOSITORY")}?ref=main&rev=${revision}`;
   run(["nix", "flake", "lock", "--override-input", input, url], { cwd: checkout });
@@ -81,7 +81,7 @@ try {
   try {
     await transaction([...ssh, commit]);
     // Publication is inside the transaction, so failure restores the pin.
-    await transaction([process.execPath, "scripts/release.ts", "publish", "--channel", channel, "--tag", env("RELEASE_TAG")]);
+    await transaction([process.execPath, ".forgejo/release/release.ts", "publish", "--channel", channel, "--tag", env("RELEASE_TAG")]);
   } catch (error) {
     process.removeListener("SIGINT", interrupt);
     process.removeListener("SIGTERM", interrupt);

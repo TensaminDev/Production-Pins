@@ -16,14 +16,6 @@ let
     umask 077
     install -d -m 0750 -o ${name} -g ${name} ${lib.escapeShellArg cfg.stateDir}
     cd ${lib.escapeShellArg cfg.stateDir}
-    install -d -m 0700 -o ${name} -g ${name} certs
-    install -m 0644 -o ${name} -g ${name} ${
-      lib.escapeShellArg (if cert == null then "" else cert)
-    } certs/cert.pem
-    ${pkgs.openssl}/bin/openssl pkcs8 -topk8 -nocrypt \
-      -in ${lib.escapeShellArg (if key == null then "" else key)} -out certs/key.pem
-    chown ${name}:${name} certs/key.pem
-    chmod 0600 certs/key.pem
     ${lib.optionalString isOmikron ''
       install -m 0644 -o ${name} -g ${name} ${lib.escapeShellArg cfg.omegaTrustFile} omega.mpkb
     ''}
@@ -46,7 +38,7 @@ in
     stateDir = mkOption {
       type = types.str;
       default = "/var/lib/${name}";
-      description = "Persistent working directory, including identities and certificates.";
+      description = "Persistent working directory, including identities.";
     };
     bindAddress = mkOption {
       type = types.str;
@@ -63,7 +55,7 @@ in
     certFile = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Runtime TLS certificate path. Set together with keyFile.";
+      description = "Runtime TLS certificate path. Set together with keyFile. The service user needs read access and traversal access to parent directories.";
     };
     keyFile = mkOption {
       type = types.nullOr types.str;
@@ -78,7 +70,7 @@ in
     identityFile = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Existing private keyring to install at startup, or null to retain or generate state.";
+      description = "Existing private keyring copied into stateDir at every startup, or null to retain existing state or let the application generate it.";
     };
     publicIdentityFile = mkOption {
       type = types.nullOr types.str;
@@ -95,9 +87,9 @@ in
       default = [ ];
       description =
         if isOmikron then
-          "Runtime environment files, including optional LiveKit credentials."
+          "Runtime environment files, including optional LiveKit credentials. Systemd loads these after the declared environment; listener overrides must agree with firewall options."
         else
-          "Runtime environment files. Supply DB_URL here; identities are file-based.";
+          "Runtime environment files loaded after the declared environment. Supply DB_URL here; identities are file-based, not PRIVATE_KEY/PUBLIC_KEY. Listener overrides must agree with firewall options.";
     };
   }
   // lib.optionalAttrs isOmikron {
@@ -112,6 +104,7 @@ in
     omegaPort = mkOption {
       type = types.port;
       default = 9187;
+      description = "Deployed Omega listener port. Set explicitly when Omega uses the module's default port 443.";
     };
     omegaTrustFile = mkOption {
       type = types.str;
@@ -152,6 +145,8 @@ in
         cfg.environment
         // {
           BIND_ADDRESS = cfg.bindAddress;
+          TLS_CERT_FILE = if cert == null then "" else cert;
+          TLS_KEY_FILE = if key == null then "" else key;
         }
         // (
           if isOmikron then

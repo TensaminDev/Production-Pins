@@ -19,8 +19,8 @@ let
       asset_dir = cfg.assetDir;
     }
     // lib.optionalAttrs (cfg.certFile != null) {
-      certificate = "${cfg.stateDir}/tls/cert.pem";
-      key = "${cfg.stateDir}/tls/key.pem";
+      certificate = cfg.certFile;
+      key = cfg.keyFile;
     };
   };
   sourceConfig =
@@ -29,13 +29,8 @@ let
   setup = pkgs.writeShellScript "iota-setup" ''
     set -eu
     umask 077
-    ${pkgs.bun}/bin/bun ${../lib/merge-config.ts} ${lib.escapeShellArg sourceConfig} ${lib.escapeShellArg configFile}
+    ${pkgs.bun}/bin/bun ${./merge-config.ts} ${lib.escapeShellArg sourceConfig} ${lib.escapeShellArg configFile}
     chown iota:iota ${lib.escapeShellArg configFile}
-    ${lib.optionalString (cfg.certFile != null) ''
-      install -d -m 0700 -o iota -g iota ${lib.escapeShellArg "${cfg.stateDir}/tls"}
-      install -m 0644 -o iota -g iota ${lib.escapeShellArg cfg.certFile} ${lib.escapeShellArg "${cfg.stateDir}/tls/cert.pem"}
-      install -m 0600 -o iota -g iota ${lib.escapeShellArg cfg.keyFile} ${lib.escapeShellArg "${cfg.stateDir}/tls/key.pem"}
-    ''}
   '';
 in
 {
@@ -56,6 +51,7 @@ in
     runtimeDir = mkOption {
       type = types.str;
       default = "/run/iota";
+      description = "IPC socket directory. The socket is owned by iota:iota with mode 0660; add authorized operators to the iota group.";
     };
     logDir = mkOption {
       type = types.str;
@@ -86,7 +82,7 @@ in
     certFile = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Runtime TLS certificate path.";
+      description = "Runtime TLS certificate path. The iota user needs read access and traversal access to parent directories.";
     };
     keyFile = mkOption {
       type = types.nullOr types.str;
@@ -108,12 +104,23 @@ in
     settings = mkOption {
       type = format.type;
       default = { };
-      description = "Operator settings, refreshed at startup. Listener options take precedence; omitted discovery fields retain daemon values.";
+      description = ''
+        Operator settings written to stateDir/config.yaml at each startup.
+        Listener and asset options take precedence. Omitted iota_id, omikron_host,
+        omikron_port and omikron_id retain their daemon values; explicit values,
+        including null, replace them. Other edits to the generated file are replaced.
+        Identities under stateDir/identity are retained.
+      '';
     };
     settingsFile = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Complete runtime YAML configuration, replacing generated settings. Its listener and TLS settings must agree with module options.";
+      description = ''
+        Complete runtime YAML configuration replacing generated settings, with the
+        same preservation of omitted discovery fields as settings. Listener and TLS
+        settings must agree with module options. Relative paths resolve against
+        stateDir, not this file's directory.
+      '';
     };
   };
   config = lib.mkIf cfg.enable {

@@ -34,11 +34,13 @@ jobs:
       - name: Refresh signed metadata
         run: |
           set -euo pipefail
-          root=$PWD
           revision=$(git rev-parse HEAD)
+          temporary=$(mktemp -d)
+          trap 'git checkout --detach "$revision"; rm -rf "$temporary"' EXIT
           for channel in stable canary; do
             git checkout --detach "$revision"
-            nix develop --impure --expr "import $root/scripts/release-env.nix { root = builtins.toPath \"$root\"; }" --command bun scripts/release.ts refresh --channel "$channel" --directory "$RUNNER_TEMP/refresh-$FORGEJO_RUN_ID-$channel"
+            nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' \
+              --command bun .forgejo/release/release.ts refresh --channel "$channel" --directory "$temporary/$channel"
           done
       - name: Remove source credentials
         if: always()

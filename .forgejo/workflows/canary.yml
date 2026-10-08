@@ -47,44 +47,40 @@ jobs:
         with:
           source-key: ${{ secrets.TENSAMIN_SOURCE_SSH_KEY }}
           known-hosts: ${{ vars.TENSAMIN_SSH_KNOWN_HOSTS }}
-      - name: Set immutable release identity
+      - name: Prepare release identity
         run: |
           set -euo pipefail
           printf 'RELEASE_SEQUENCE=%s\nRELEASE_TAG=canary-%s-%s\n' "$(date +%s)" "$(git rev-parse HEAD)" "$FORGEJO_RUN_ID" >> "$GITHUB_ENV"
-      - name: Check central release scripts
+          rm -rf release-out release-arm
+      - name: Validate and build release artifacts
+        run: |
+          build=$(nix build --impure --no-link --print-out-paths --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); kind = "build"; }')
+          nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bash "$build" canary release-out
+      - name: Attempt aarch64 artifacts
         run: |
           set -euo pipefail
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bash scripts/check.sh
-      - name: Validate and build all central packages and client assets
-        run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bash scripts/release-build.sh "$RELEASE_CHANNEL" release-out
-      - name: Attempt aarch64 build with available builders
-        run: |
-          set -euo pipefail
-          if ! nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bash scripts/release-build.sh "$RELEASE_CHANNEL" release-arm aarch64-linux > arm-build.log 2>&1; then
-            printf 'aarch64 unavailable. See the attached arm-build.log.\n' > release-out/aarch64-unavailable.txt
-            cp arm-build.log release-out/
+          build=$(nix build --impure --no-link --print-out-paths --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); kind = "build"; }')
+          if nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bash "$build" canary release-arm aarch64-linux > arm-build.log 2>&1; then
+            cp release-arm/*linux-aarch64* release-arm/*arm64* release-arm/electron-release-metadata-aarch64.json release-out/
           else
-            cp release-arm/*linux-aarch64* release-out/
-            cp release-arm/*arm64* release-out/
-            cp release-arm/electron-release-metadata-aarch64.json release-out/
+            printf 'aarch64 unavailable. See arm-build.log.\n' > release-out/aarch64-unavailable.txt
+            cp arm-build.log release-out/
           fi
-      - name: Sign manifests and validate installer bundles
+      - name: Sign manifests and record provenance
         run: |
           set -euo pipefail
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts sign --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts provenance --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
+          nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bun .forgejo/release/release.ts sign --channel canary --tag "$RELEASE_TAG"
+          nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bun .forgejo/release/release.ts provenance --channel canary --tag "$RELEASE_TAG"
       - name: Preserve combined build artifacts
+        if: always()
         uses: https://data.forgejo.org/actions/upload-artifact@v3
         with:
           name: combined-release
           path: release-out/
-      - name: Stage and verify draft attachments
-        run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/release.ts stage --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
-      - name: Deploy canary, check health and publish channel pointers
-        run: |
-          nix develop --impure --expr "import $PWD/scripts/release-env.nix { root = builtins.toPath \"$PWD\"; }" --command bun scripts/deploy-release.ts
+      - name: Stage and verify release attachments
+        run: nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bun .forgejo/release/release.ts stage --channel canary --tag "$RELEASE_TAG"
+      - name: Deploy canary and publish after health checks
+        run: nix develop --impure --expr 'import ./packages/release-environment.nix { root = builtins.toPath (builtins.getEnv "PWD"); }' --command bun .forgejo/release/deploy.ts
       - name: Remove source credentials
         if: always()
         run: |
