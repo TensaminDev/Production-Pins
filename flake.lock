@@ -1,13 +1,20 @@
 {
   "nodes": {
     "client": {
-      "flake": false,
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
       "locked": {
-        "lastModified": 1791269746,
-        "narHash": "sha256-4cDrynVQriTR6lQMp1c6jD0TXp8leXettbjANAetlJA=",
+        "lastModified": 1791489483,
+        "narHash": "sha256-upjQMojoDUuI8Nqpc+hS8mhh7Bgct2lW6gNEJ2ONdNQ=",
         "ref": "dev",
-        "rev": "bc5c34948cfe39e56a708e1e1f5a509d626a307b",
-        "revCount": 648,
+        "rev": "cb86500994f8958b56de5c7d5fb9eef44571652b",
+        "revCount": 650,
         "type": "git",
         "url": "ssh://git@methanium.net/tensamin/client"
       },
@@ -18,6 +25,31 @@
       }
     },
     "iota": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ],
+        "type-maps": "type-maps"
+      },
+      "locked": {
+        "lastModified": 1791489460,
+        "narHash": "sha256-S2Sb1i/BkynvNp9Rt3i+B2oM5PyAJ5gf06G9ueE/8DA=",
+        "ref": "main",
+        "rev": "4949a63bb86413def077895de08661243b21fb21",
+        "revCount": 330,
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/iota"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/iota"
+      }
+    },
+    "iota_2": {
       "flake": false,
       "locked": {
         "lastModified": 1791141275,
@@ -85,13 +117,22 @@
       }
     },
     "omega": {
-      "flake": false,
+      "inputs": {
+        "iota": "iota_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ],
+        "type-maps": "type-maps_2"
+      },
       "locked": {
-        "lastModified": 1791141275,
-        "narHash": "sha256-Bo65XMYfSb/KFsp3fRVU+wVXrj4WrQGhyBRh51X24Uw=",
+        "lastModified": 1791489454,
+        "narHash": "sha256-njFATMOGOsL+EgGJqpDKCEmlQgggTSVgsFsHth5Hz3g=",
         "ref": "main",
-        "rev": "58bedd6a051ba281832c0d94e1de9a2313646341",
-        "revCount": 159,
+        "rev": "8967fecf9cee7f07513c3155701eaf9307e77258",
+        "revCount": 161,
         "type": "git",
         "url": "ssh://git@methanium.net/tensamin/omega"
       },
@@ -102,13 +143,21 @@
       }
     },
     "omikron": {
-      "flake": false,
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ],
+        "type-maps": "type-maps_3"
+      },
       "locked": {
-        "lastModified": 1791141275,
-        "narHash": "sha256-TKQebKvVTlHLEfAmoM+MtY5A2md5tUhx7lFXz2L5H8M=",
+        "lastModified": 1791489442,
+        "narHash": "sha256-FppTd+pp0iNJ5TiljHjxU+L9uFQGT18dShwErmSEEDw=",
         "ref": "main",
-        "rev": "9d96c5a9b9052ba6f83082555af749aac1f6aeab",
-        "revCount": 213,
+        "rev": "82e27e8e1322c120a5a9d379bbd49c9126587412",
+        "revCount": 215,
         "type": "git",
         "url": "ssh://git@methanium.net/tensamin/omikron"
       },
@@ -148,6 +197,57 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "type": "github"
+      }
+    },
+    "type-maps": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790572556,
+        "narHash": "sha256-ugNZR2Be9N9UjG0aVN8Yrk4hYOVC2edjtC9xBhbW35w=",
+        "ref": "main",
+        "rev": "4f18c7a0d9b04d38a77fbb011c4f0b21c25bf7bf",
+        "revCount": 28,
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
+      }
+    },
+    "type-maps_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790572556,
+        "narHash": "sha256-ugNZR2Be9N9UjG0aVN8Yrk4hYOVC2edjtC9xBhbW35w=",
+        "ref": "main",
+        "rev": "4f18c7a0d9b04d38a77fbb011c4f0b21c25bf7bf",
+        "revCount": 28,
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
+      }
+    },
+    "type-maps_3": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790572556,
+        "narHash": "sha256-ugNZR2Be9N9UjG0aVN8Yrk4hYOVC2edjtC9xBhbW35w=",
+        "ref": "main",
+        "rev": "4f18c7a0d9b04d38a77fbb011c4f0b21c25bf7bf",
+        "revCount": 28,
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
       }
     }
   },
