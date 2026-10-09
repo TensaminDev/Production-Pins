@@ -58,6 +58,7 @@
       devShells = forSystems (system: {
         default = import ./packages/release-environment.nix {
           root = self;
+          central = self;
           inherit system;
         };
       });

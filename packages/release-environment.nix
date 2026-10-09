@@ -1,12 +1,12 @@
 {
   root,
+  central ? builtins.getFlake (toString root),
   kind ? "tools",
   channel ? "canary",
   system ? builtins.currentSystem,
   sources ? { },
 }:
 let
-  central = builtins.getFlake (toString root);
   pkgs = import central.inputs.nixpkgs {
     inherit system;
     overlays = [ central.inputs.rust-overlay.overlays.default ];

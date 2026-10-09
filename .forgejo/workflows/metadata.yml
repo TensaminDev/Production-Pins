@@ -22,7 +22,8 @@ jobs:
       IOTA_RELEASE_SIGNING_KEY_ID: ${{ vars.IOTA_RELEASE_SIGNING_KEY_ID || 'primary' }}
       IOTA_BASE_VERSION: ${{ vars.IOTA_BASE_VERSION || '0.1.0' }}
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v4
+      - name: Checkout repository
+        uses: https://data.forgejo.org/actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false

@@ -36,7 +36,8 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v4
+      - name: Checkout repository
+        uses: https://data.forgejo.org/actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false

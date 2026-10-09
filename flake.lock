@@ -2,6 +2,7 @@
   "nodes": {
     "client": {
       "inputs": {
+        "mtp-type-maps": "mtp-type-maps",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -10,11 +11,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791489483,
-        "narHash": "sha256-upjQMojoDUuI8Nqpc+hS8mhh7Bgct2lW6gNEJ2ONdNQ=",
+        "lastModified": 1791566710,
+        "narHash": "sha256-bUKxhRSc6yt7lVxkuqb42Yq4e+qn+ylA3/6lRPAKinI=",
         "ref": "dev",
-        "rev": "cb86500994f8958b56de5c7d5fb9eef44571652b",
-        "revCount": 650,
+        "rev": "f6bb860350cdee83bc6ec57782594365d7b79cf8",
+        "revCount": 655,
         "type": "git",
         "url": "ssh://git@methanium.net/tensamin/client"
       },
@@ -92,6 +93,23 @@
         "rev": "4f18c7a0d9b04d38a77fbb011c4f0b21c25bf7bf",
         "revCount": 28,
         "type": "git",
+        "url": "https://git.methanium.net/tensamin/mtp-type-maps"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.methanium.net/tensamin/mtp-type-maps"
+      }
+    },
+    "mtp-type-maps_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790572556,
+        "narHash": "sha256-ugNZR2Be9N9UjG0aVN8Yrk4hYOVC2edjtC9xBhbW35w=",
+        "ref": "main",
+        "rev": "4f18c7a0d9b04d38a77fbb011c4f0b21c25bf7bf",
+        "revCount": 28,
+        "type": "git",
         "url": "ssh://git@methanium.net/tensamin/mtp-type-maps"
       },
       "original": {
@@ -102,11 +120,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1791011291,
-        "narHash": "sha256-V6OBJccNKBo/ktknxlJXZChPoI0NE2lembArBO3CE9k=",
+        "lastModified": 1791366222,
+        "narHash": "sha256-o0N4g6uSOIppU7CGToNvGlMf5vC+B6O6ukFHKY/TKOY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "73e728ddb6b7a12d18808f510813a13ee1fe4cce",
+        "rev": "39ad350a0602fa0a58a544344e3e9187526ea45c",
         "type": "github"
       },
       "original": {
@@ -172,7 +190,7 @@
         "client": "client",
         "iota": "iota",
         "mtp": "mtp",
-        "mtp-type-maps": "mtp-type-maps",
+        "mtp-type-maps": "mtp-type-maps_2",
         "nixpkgs": "nixpkgs",
         "omega": "omega",
         "omikron": "omikron",
@@ -186,11 +204,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791101754,
-        "narHash": "sha256-y/GF+9B0t0TZ0nQiSRMqDXpr76yT7sdDbS/3GNLhzkE=",
+        "lastModified": 1791535654,
+        "narHash": "sha256-QFgGi6Wgh7AgqPFdAXEmkTgnR0B5M0omheIHvo/02dU=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "dbc715a4b7c0ace63b9769a032d1dd34cd89e5bd",
+        "rev": "4ca2963243427cb86bd6b4d9ca6010db0162a619",
         "type": "github"
       },
       "original": {
