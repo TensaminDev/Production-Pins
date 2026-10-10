@@ -59,7 +59,7 @@ in
     };
     assetDir = mkOption {
       type = types.str;
-      default = "${self.packages.${pkgs.stdenv.hostPlatform.system}.iota.passthru.source}/static/web";
+      default = "${self.packages.${pkgs.stdenv.hostPlatform.system}.iota.src}/static/web";
       description = "Static Iota assets. Defaults to the pinned source's shipped web directory.";
     };
     bindAddress = mkOption {
