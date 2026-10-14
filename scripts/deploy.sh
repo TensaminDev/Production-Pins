@@ -50,5 +50,5 @@ git add flake.lock flake.nix
 if ! git diff --cached --quiet; then
   git -c user.name=tensamin-deploy -c user.email=tensamin-deploy@users.noreply.github.com \
     commit -m "Update $CHANNEL pins to $PINS_REVISION"
-  git -c credential.helper='!gh auth git-credential' push https://github.com/MethaniumDev/NixOS-Flake.git HEAD:main
+  git -c credential.helper='!gh auth git-credential' push https://github.com/nonanium/NixOS-Flake.git HEAD:main
 fi

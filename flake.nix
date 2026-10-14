@@ -34,7 +34,7 @@
       inputs.mtp-type-maps.follows = "mtp-type-maps";
     };
     mtp = {
-      url = "github:MethaniumDev/MTP/master";
+      url = "github:nonanium/MTP/master";
       flake = false;
     };
     mtp-type-maps = {

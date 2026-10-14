@@ -76,13 +76,13 @@
       "locked": {
         "lastModified": 1791639369,
         "narHash": "sha256-XPTSHkbcUE4PguJXBlXzL74JADG4Kjp5eB11llMcxxc=",
-        "owner": "MethaniumDev",
+        "owner": "nonanium",
         "repo": "MTP",
         "rev": "9f7f94e4cbd227610784ae47a1e7a1acf66f8584",
         "type": "github"
       },
       "original": {
-        "owner": "MethaniumDev",
+        "owner": "nonanium",
         "ref": "master",
         "repo": "MTP",
         "type": "github"

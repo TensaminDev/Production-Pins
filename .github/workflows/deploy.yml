@@ -44,7 +44,7 @@ jobs:
           echo "PINS_REVISION=$revision" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
-          repository: MethaniumDev/NixOS-Flake
+          repository: nonanium/NixOS-Flake
           token: ${{ secrets.INFRASTRUCTURE_TOKEN }}
           path: infrastructure
           fetch-depth: 0
