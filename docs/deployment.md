@@ -4,6 +4,8 @@ Push updated `flake.lock` pins to `main` to deploy Canary. After testing that de
 
 Both workflows run on GitHub-hosted Ubuntu, join the tailnet temporarily, build locally, and deploy with deploy-rs through Gartenhaus. The selected channel's infrastructure lock is committed only after deployment checks pass. Client installers, release signing and registry publication are not part of these server deployment workflows; the former Forgejo workflows referenced missing release scripts.
 
+Infrastructure `flake.nix` records separate immutable Stable and Canary revisions. Ordinary `nix flake update` cannot promote Stable by following a moving branch. Only manual Stable promotion changes its recorded revision.
+
 ## Repository settings
 
 In `TensaminDev/Production-Pins`, enable Actions and allow `actions/*`, `cachix/install-nix-action` and `tailscale/github-action`. Leave default workflow permissions read-only. The workflows request Contents read and Actions read. No source-repository write tokens are needed for public application dependencies.
