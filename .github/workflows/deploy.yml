@@ -51,8 +51,9 @@ jobs:
           persist-credentials: false
       - uses: tailscale/github-action@v3
         with:
-          authkey: ${{ secrets.TS_AUTH_KEY }}
-          hostname: tensamin-deploy-${{ github.run_id }}
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:tensamin-deploy
       - name: Configure deployment SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
