@@ -17,7 +17,7 @@
       ''
         cd ${root}
         mkdir -p "$out"
-        bun build --target=bun --outdir "$out" packages/*.ts modules/*.ts .forgejo/release/*.ts
+        bun build --target=bun --outdir "$out" packages/*.ts modules/*.ts
         shellcheck ${import ./release-build.nix { inherit pkgs; }} \
           ${project.packages.client-release-desktop} \
           ${project.packages.client-release-android}

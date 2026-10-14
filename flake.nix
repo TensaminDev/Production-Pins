@@ -6,31 +6,39 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     iota = {
-      url = "git+ssh://git@methanium.net/tensamin/iota?ref=main";
+      url = "github:TensaminDev/Iota/main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+      inputs.type-maps.follows = "mtp-type-maps";
     };
     omikron = {
-      url = "git+ssh://git@methanium.net/tensamin/omikron?ref=main";
+      url = "github:TensaminDev/Omikron/main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+      inputs.type-maps.follows = "mtp-type-maps";
     };
     omega = {
-      url = "git+ssh://git@methanium.net/tensamin/omega?ref=main";
+      url = "github:TensaminDev/Omega/main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+      inputs.type-maps.follows = "mtp-type-maps";
+      inputs.iota = {
+        url = "github:TensaminDev/Iota/main";
+        flake = false;
+      };
     };
     client = {
-      url = "git+ssh://git@methanium.net/tensamin/client?ref=dev";
+      url = "github:TensaminDev/Client/dev";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+      inputs.mtp-type-maps.follows = "mtp-type-maps";
     };
     mtp = {
-      url = "git+ssh://git@methanium.net/methanium/mtp?ref=master";
+      url = "github:MethaniumDev/MTP/master";
       flake = false;
     };
     mtp-type-maps = {
-      url = "git+ssh://git@methanium.net/tensamin/mtp-type-maps?ref=main";
+      url = "github:TensaminDev/MTP-Type-Maps/main";
       flake = false;
     };
   };

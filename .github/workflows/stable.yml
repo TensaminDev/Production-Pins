@@ -1,0 +1,21 @@
+name: Deploy Stable
+on:
+  workflow_dispatch:
+    inputs:
+      canary_run_id:
+        description: Successful Canary run you have tested with users
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: tensamin-deployment
+  cancel-in-progress: false
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      channel: stable
+      canary_run_id: ${{ inputs.canary_run_id }}
+    secrets: inherit
