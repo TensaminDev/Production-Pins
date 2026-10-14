@@ -19,9 +19,10 @@ else
   input=canary-pins
 fi
 host=$(nix eval --raw ".#deploy.nodes.$node.hostname")
+ssh_user=$(nix eval --raw ".#deploy.nodes.$node.sshUser")
 jump=$(nix eval --json ".#deploy.nodes.$node.sshOpts" | jq -r '.[1]')
 # The reviewed configuration changes disk layout. Never switch an unmigrated VM.
-if ! ssh -J "$jump" "alois@$host" 'test "$(findmnt -n -o FSTYPE /)" = tmpfs && test -d /persist/databases/omega-1'; then
+if ! ssh -J "$jump" "$ssh_user@$host" 'test "$(findmnt -n -o FSTYPE /)" = tmpfs && test -d /persist/databases/omega-1'; then
   echo "Guest $node is not yet migrated to the impermanent layout." >&2
   echo 'Perform the migration in docs/guides/impermanence.md (nixos-flake) before enabling deployments.' >&2
   exit 1
@@ -39,7 +40,7 @@ PY
 nix flake update "$input"
 nix build ".#nixosConfigurations.$node.config.system.build.toplevel" --no-link
 nix run github:serokell/deploy-rs -- ".#$node" --skip-checks
-ssh -J "$jump" "alois@$host" 'systemctl is-active container@omega-1 container@iota-1; sudo -n nixos-container run omega-1 -- systemctl is-active mysql omega'
+ssh -J "$jump" "$ssh_user@$host" 'systemctl is-active container@omega-1 container@iota-1; sudo -n nixos-container run omega-1 -- systemctl is-active mysql omega'
 if [[ $CHANNEL == canary ]]; then
   jq -n --arg pins "$PINS_REVISION" --arg infrastructure "$base" \
     '{pins: $pins, infrastructure: $infrastructure}' > ../deployment/manifest.json
