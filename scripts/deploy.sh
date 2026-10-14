@@ -21,7 +21,11 @@ fi
 host=$(nix eval --raw ".#deploy.nodes.$node.hostname")
 jump=$(nix eval --json ".#deploy.nodes.$node.sshOpts" | jq -r '.[1]')
 # The reviewed configuration changes disk layout. Never switch an unmigrated VM.
-ssh -J "$jump" "alois@$host" 'test "$(findmnt -n -o FSTYPE /)" = tmpfs && test -d /persist/databases/omega-1'
+if ! ssh -J "$jump" "alois@$host" 'test "$(findmnt -n -o FSTYPE /)" = tmpfs && test -d /persist/databases/omega-1'; then
+  echo "Guest $node is not yet migrated to the impermanent layout." >&2
+  echo 'Perform the migration in docs/guides/impermanence.md (nixos-flake) before enabling deployments.' >&2
+  exit 1
+fi
 python3 - "$input" "$PINS_REVISION" <<'PY'
 import re
 import sys
