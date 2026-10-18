@@ -58,13 +58,11 @@ jobs:
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
-          FORGEJO_READ_KEY: ${{ secrets.FORGEJO_READ_KEY }}
         run: |
           set -euo pipefail
           umask 077
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
-          printf '%s\n' "$FORGEJO_READ_KEY" > ~/.ssh/forgejo
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           cat > ~/.ssh/config <<'EOF'
           Host *
@@ -72,9 +70,6 @@ jobs:
             StrictHostKeyChecking yes
             IdentitiesOnly yes
             IdentityFile ~/.ssh/deploy
-          Host git.internal.methanium.net
-            IdentityFile ~/.ssh/forgejo
-            Port 2222
           EOF
       - name: Build, deploy and persist selected channel
         env:
@@ -89,4 +84,4 @@ jobs:
           retention-days: 90
       - name: Remove credentials
         if: always()
-        run: rm -f ~/.ssh/deploy ~/.ssh/forgejo ~/.ssh/config
+        run: rm -f ~/.ssh/deploy ~/.ssh/config

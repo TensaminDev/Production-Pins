@@ -42,7 +42,9 @@ pkgs.writeShellScript "release-build" ''
   chmod -R u+w "$work"
   export RELEASE_ROOT=$root RELEASE_OUT=$out RELEASE_WORK=$work RELEASE_ARCH=$arch
   export TENSAMIN_RELEASE_TAG=''${RELEASE_TAG:?} TENSAMIN_RELEASE_VERSION=$RELEASE_TAG
-  export FORGEJO_RELEASE_ASSET_BASE_URL="''${FORGEJO_SERVER_URL:?}/''${FORGEJO_REPOSITORY:?}/releases/download/$RELEASE_TAG"
+  export TENSAMIN_RELEASE_ASSET_BASE_URL="''${GITHUB_SERVER_URL:-https://github.com}/''${GITHUB_REPOSITORY:?}/releases/download/$RELEASE_TAG"
+  # Pinned client revisions may still read the previous variable name.
+  export FORGEJO_RELEASE_ASSET_BASE_URL=$TENSAMIN_RELEASE_ASSET_BASE_URL
   desktop=$(environment client-desktop)
   nix develop --impure --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"electron\"; system = \"$system\"; }" \
     --command bash "$desktop"
