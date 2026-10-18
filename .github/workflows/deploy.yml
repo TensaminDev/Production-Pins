@@ -70,9 +70,10 @@ jobs:
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           RELEASE_SYSTEM: ${{ matrix.system }}
         run: |
-          builder=$(nix build --impure --no-link --print-out-paths --expr \
+          builder=$(nix build --impure --no-update-lock-file --no-link --print-out-paths --expr \
             "import $PWD/packages/release-environment.nix { root = builtins.toPath \"$PWD\"; kind = \"build\"; system = \"$RELEASE_SYSTEM\"; }")
           bash "$builder" "$CHANNEL" build-output "$RELEASE_SYSTEM"
+          git diff --exit-code -- flake.lock
       - name: Sign Iota update metadata and validate installers
         env:
           IOTA_RELEASE_SIGNING_KEY: ${{ secrets.IOTA_RELEASE_SIGNING_KEY }}

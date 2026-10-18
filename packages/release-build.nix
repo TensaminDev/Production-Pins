@@ -13,7 +13,7 @@ pkgs.writeShellScript "release-build" ''
   export TENSAMIN_ANDROID_VERSION_CODE=''${RELEASE_SEQUENCE:?}
   system=''${3:-${pkgs.stdenv.hostPlatform.system}}
   environment() {
-    nix build --impure --no-link --print-out-paths --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"$1\"; channel = \"$channel\"; system = \"$system\"; }"
+    nix build --impure --no-update-lock-file --no-link --print-out-paths --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"$1\"; channel = \"$channel\"; system = \"$system\"; }"
   }
   environment checks >/dev/null
   portable=$(environment portable)
@@ -27,7 +27,7 @@ pkgs.writeShellScript "release-build" ''
   mtp_source=$(nix eval --impure --raw --expr "(builtins.getFlake \"$root\").inputs.mtp.outPath")
   cp -r "$mtp_source" "$work_root/mtp"
   chmod -R u+w "$work_root/mtp"
-  source=$(nix build --no-link --print-out-paths ".#packages.$system.client-source")
+  source=$(nix build --no-update-lock-file --no-link --print-out-paths ".#packages.$system.client-source")
   cp -r "$source/." "$work/"
   chmod -R u+w "$work"
   export RELEASE_ROOT=$root RELEASE_OUT=$out RELEASE_WORK=$work RELEASE_ARCH=$arch
@@ -36,11 +36,11 @@ pkgs.writeShellScript "release-build" ''
   # Pinned client revisions may still read the previous variable name.
   export FORGEJO_RELEASE_ASSET_BASE_URL=$TENSAMIN_RELEASE_ASSET_BASE_URL
   desktop=$(environment client-desktop)
-  nix develop --impure --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"electron\"; system = \"$system\"; }" \
+  nix develop --impure --no-update-lock-file --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"electron\"; system = \"$system\"; }" \
     --command bash "$desktop"
   if [[ $arch == x86_64 ]]; then
     android=$(environment client-android)
-    nix develop --impure --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"tauri\"; }" \
+    nix develop --impure --no-update-lock-file --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"tauri\"; }" \
       --command bash "$android"
   fi
 ''
