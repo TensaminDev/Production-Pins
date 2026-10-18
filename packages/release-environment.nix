@@ -18,9 +18,9 @@ let
     inherit
       pkgs
       project
-      root
       system
       ;
+    root = central.outPath;
     inputs = central.inputs;
   };
   artifacts = import ./release-artifacts.nix { inherit pkgs project channel; };
