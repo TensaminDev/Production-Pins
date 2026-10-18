@@ -16,20 +16,10 @@ pkgs.writeShellScript "release-build" ''
     nix build --impure --no-link --print-out-paths --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"$1\"; channel = \"$channel\"; system = \"$system\"; }"
   }
   environment checks >/dev/null
-  packages=$(environment packages)
   portable=$(environment portable)
   cp -rL "$portable/." "$out/"
   chmod -R u+w "$out"
   arch=''${system%-linux}
-  printf '%s\n' "$packages" > "$out/packages-$arch.txt"
-  for name in iota iota-daemon iota-ui omikron omega client client-web; do
-    package=$(realpath "$packages/$name")
-    # Store exports need the store database and stay outside the sandbox.
-    nix-store --query --requisites "$package" > "$out/closure-$name.txt"
-    mapfile -t closure < "$out/closure-$name.txt"
-    nix-store --export "''${closure[@]}" | gzip -n > "$out/$name-linux-$arch.nar.gz"
-    rm "$out/closure-$name.txt"
-  done
   work_root=$(mktemp -d)
   trap 'rm -rf "$work_root"' EXIT
   work=$work_root/tensamin/client

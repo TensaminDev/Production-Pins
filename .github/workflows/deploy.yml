@@ -5,17 +5,89 @@ on:
       channel:
         required: true
         type: string
-      canary_run_id:
-        default: ''
-        type: string
 permissions:
-  contents: read
+  contents: write
   actions: read
 defaults:
   run:
     shell: bash
 jobs:
+  select:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.channel }}
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      sequence: ${{ steps.release.outputs.sequence }}
+      published_at: ${{ steps.release.outputs.published_at }}
+      expires_at: ${{ steps.release.outputs.expires_at }}
+      canary_run_id: ${{ steps.release.outputs.canary_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select immutable release identity and check prerequisites
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ inputs.channel }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          IOTA_RELEASE_SIGNING_KEY: ${{ secrets.IOTA_RELEASE_SIGNING_KEY }}
+          IOTA_RELEASE_PUBLIC_KEY: ${{ vars.IOTA_RELEASE_PUBLIC_KEY }}
+        run: bash scripts/select-release.sh
+
+  build:
+    needs: select
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            system: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            system: aarch64-linux
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    environment: ${{ inputs.channel }}
+    env:
+      RELEASE_TAG: ${{ needs.select.outputs.tag }}
+      RELEASE_SEQUENCE: ${{ needs.select.outputs.sequence }}
+      PUBLISHED_AT: ${{ needs.select.outputs.published_at }}
+      EXPIRES_AT: ${{ needs.select.outputs.expires_at }}
+      CHANNEL: ${{ inputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@v31
+      - name: Build and verify Client and Iota
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          RELEASE_SYSTEM: ${{ matrix.system }}
+        run: |
+          builder=$(nix build --impure --no-link --print-out-paths --expr \
+            "import $PWD/packages/release-environment.nix { root = builtins.toPath \"$PWD\"; kind = \"build\"; system = \"$RELEASE_SYSTEM\"; }")
+          bash "$builder" "$CHANNEL" build-output "$RELEASE_SYSTEM"
+      - name: Sign Iota update metadata and validate installers
+        env:
+          IOTA_RELEASE_SIGNING_KEY: ${{ secrets.IOTA_RELEASE_SIGNING_KEY }}
+          IOTA_RELEASE_PUBLIC_KEY: ${{ vars.IOTA_RELEASE_PUBLIC_KEY }}
+          RELEASE_SYSTEM: ${{ matrix.system }}
+        run: nix develop --no-write-lock-file --command bash scripts/sign-release.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.system }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 90
+
   deploy:
+    needs: [select, build]
     runs-on: ubuntu-latest
     environment: ${{ inputs.channel }}
     steps:
@@ -27,7 +99,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CHANNEL: ${{ inputs.channel }}
-          CANARY_RUN_ID: ${{ inputs.canary_run_id }}
+          CANARY_RUN_ID: ${{ needs.select.outputs.canary_run_id }}
         run: |
           set -euo pipefail
           mkdir -p deployment
@@ -36,12 +108,9 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANARY_RUN_ID" > deployment/run.json
             jq -e '.conclusion == "success" and .head_branch == "main" and .path == ".github/workflows/canary.yml"' deployment/run.json
             gh run download "$CANARY_RUN_ID" --repo "$GITHUB_REPOSITORY" --name canary-deployment --dir deployment
-            revision=$(jq -er .pins deployment/manifest.json)
-          else
-            revision=$GITHUB_SHA
+            jq -e --arg sha "$GITHUB_SHA" '.pins == $sha' deployment/manifest.json
           fi
-          [[ $revision =~ ^[0-9a-f]{40}$ ]]
-          echo "PINS_REVISION=$revision" >> "$GITHUB_ENV"
+          echo "PINS_REVISION=$GITHUB_SHA" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           repository: nonanium/NixOS-Flake
@@ -85,3 +154,25 @@ jobs:
       - name: Remove credentials
         if: always()
         run: rm -f ~/.ssh/deploy ~/.ssh/config
+
+  publish:
+    needs: [select, build, deploy]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+      - name: Publish immutable release and advance channel metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ inputs.channel }}
+          RELEASE_TAG: ${{ needs.select.outputs.tag }}
+          RELEASE_SEQUENCE: ${{ needs.select.outputs.sequence }}
+          IOTA_RELEASE_PUBLIC_KEY: ${{ vars.IOTA_RELEASE_PUBLIC_KEY }}
+        run: bash scripts/publish-release.sh

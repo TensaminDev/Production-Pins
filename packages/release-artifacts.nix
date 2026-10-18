@@ -54,16 +54,6 @@ in
         done
         tar --sort=name --mtime=@1 --owner=0 --group=0 --numeric-owner \
           -cf - -C ${packages.iota-portable} bin share | gzip -n > "$out/iota-portable-linux-${arch}.tar.gz"
-        ${pkgs.lib.concatMapStringsSep "\n"
-          (name: ''
-            cp -L ${packages.${"${name}-container"}} "$out/${name}-image-linux-${arch}.tar.gz"
-          '')
-          [
-            "iota"
-            "omikron"
-            "omega"
-          ]
-        }
         cp -rL ${packages.iota-bundle}/share/iota "$out/iota-contract"
         chmod -R u+w "$out/iota-contract"
         mkdir -p "$out/iota-contract/iota-updater" "$out/iota-contract/iota-installer" "$out/iota-contract/static"
