@@ -135,11 +135,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791987759,
-        "narHash": "sha256-HL3/j34Ho6o0PpP7kPXE4+xtOqok7KDYKXf+UeTxBZE=",
+        "lastModified": 1792316880,
+        "narHash": "sha256-30muGGMohS5lqf3MJrsR67ld/Rt07jNxpR2CtZIi+zM=",
         "owner": "TensaminDev",
         "repo": "Omega",
-        "rev": "a7fb4fd87eeae9c67b73d27b7e8781be92872b2c",
+        "rev": "5bb89c865ae1602fd1e30b91b3a211621f23bd68",
         "type": "github"
       },
       "original": {
@@ -162,11 +162,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791987759,
-        "narHash": "sha256-j9cQhdi98R9nKOniAHtKa/FMT6cTlzJA+fWlRaevRp8=",
+        "lastModified": 1792316880,
+        "narHash": "sha256-y6vniqaa+o7Xh7GzyUJjPPpsHTKDj/Rsv3A+Eg33Pxs=",
         "owner": "TensaminDev",
         "repo": "Omikron",
-        "rev": "ce59b6287243a08c14587a25f40c7b072e9fa60f",
+        "rev": "9e749ec324c90732b2bbf822891407506c5a5af3",
         "type": "github"
       },
       "original": {
