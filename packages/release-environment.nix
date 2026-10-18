@@ -70,6 +70,8 @@ else if kind == "checks" then
   )
 else if kind == "portable" then
   artifacts.portable
+else if kind == "web" then
+  project.packages.client-web.overrideAttrs { TENSAMIN_CHANNEL = channel; }
 else if kind == "packages" then
   artifacts.packages
 else if kind == "build" then

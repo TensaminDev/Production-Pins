@@ -20,6 +20,10 @@ pkgs.writeShellScript "release-build" ''
   cp -rL "$portable/." "$out/"
   chmod -R u+w "$out"
   arch=''${system%-linux}
+  if [[ $arch == x86_64 ]]; then
+    web=$(environment web)
+    tar -czf "$out/client-web.tar.gz" -C "$web" .
+  fi
   work_root=$(mktemp -d)
   trap 'rm -rf "$work_root"' EXIT
   work=$work_root/tensamin/client
