@@ -18,9 +18,9 @@ else
   node=tensamin-canary
   input=canary-pins
 fi
-# Read connection details without resolving the infrastructure's flake inputs.
-connection=$(nix eval --impure --json --expr "
-  let host = (import ./hosts).gartenhaus; in {
+# Read the exported inventory without evaluating a complete NixOS system.
+connection=$(nix eval --json .#lib.hosts --apply "hosts:
+  let host = hosts.gartenhaus; in {
     address = host.inventory.guests.\"$node\".address;
     jump = \"deploy@\" + host.management.address + \":\" + toString host.management.port;
   }")
