@@ -66,8 +66,9 @@ Pages and release publication still run afterward.
 
 Both GitHub environments use the existing deployment configuration:
 
-- `INFRASTRUCTURE_TOKEN` checks out and pushes infrastructure and supplies Nix's
-  GitHub read access. It must also be allowed to read any private GitHub inputs.
+- `INFRASTRUCTURE_TOKEN` checks out and pushes the infrastructure repository.
+  Nix source fetches use the workflow's native `github.token`, independently of
+  the infrastructure token's organization access and lifetime policy.
 - `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET` join the runner to the tailnet as
   `tag:tensamin-deploy`.
 - `DEPLOY_SSH_KEY` accesses the selected guest through its inventory jump host.

@@ -157,10 +157,12 @@ jobs:
         env:
           CHANNEL: ${{ inputs.channel }}
           GH_TOKEN: ${{ secrets.INFRASTRUCTURE_TOKEN }}
+          NIX_GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # Keep the existing GitHub read token out of checkout and command output.
-          export NIX_CONFIG="access-tokens = github.com=$GH_TOKEN"
+          # The infrastructure PAT is only for its checkout/push. Source fetches
+          # use this repository's native token, accepted by TensaminDev's policy.
+          export NIX_CONFIG="access-tokens = github.com=$NIX_GITHUB_TOKEN"
           bash scripts/deploy.sh
       - uses: actions/upload-artifact@v4
         with:
