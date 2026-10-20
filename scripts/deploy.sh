@@ -4,14 +4,15 @@ set -euo pipefail
 [[ ${PINS_REVISION:?} =~ ^[0-9a-f]{40}$ ]]
 cd infrastructure
 base=$(git rev-parse HEAD)
+[[ -z $(git status --porcelain) ]]
+[[ $(git rev-parse origin/main) == "$base" ]]
 if [[ $CHANNEL == stable ]]; then
   tested=$(jq -er .infrastructure ../deployment/manifest.json)
   [[ $tested =~ ^[0-9a-f]{40}$ ]]
-  # Lock-only channel changes are allowed; infrastructure changes need a new trial.
-  git show "$tested:flake.nix" | sed -E 's@Production-Pins/[0-9a-f]{40}@Production-Pins/REVISION@g' > ../deployment/tested-flake.nix
-  sed -E 's@Production-Pins/[0-9a-f]{40}@Production-Pins/REVISION@g' flake.nix > ../deployment/current-flake.nix
-  cmp ../deployment/tested-flake.nix ../deployment/current-flake.nix
-  test -z "$(git diff --name-only "$tested" HEAD -- . ':!flake.lock' ':!flake.nix')"
+  if [[ $base != "$tested" ]]; then
+    echo 'Infrastructure main has changed since the successful Canary deployment. Rerun Canary before Stable.' >&2
+    exit 1
+  fi
   node=tensamin-prod
   input=prod-pins
 else
@@ -19,20 +20,19 @@ else
   input=canary-pins
 fi
 # Read the exported inventory without evaluating a complete NixOS system.
-connection=$(nix eval --json .#lib.hosts --apply "hosts:
+connection=$(nix eval --no-update-lock-file --json .#lib.hosts --apply "hosts:
   let host = hosts.gartenhaus; in {
     address = host.inventory.guests.\"$node\".address;
     jump = \"deploy@\" + host.management.address + \":\" + toString host.management.port;
   }")
 host=$(jq -er .address <<< "$connection")
 jump=$(jq -er .jump <<< "$connection")
-target="deploy@$host"
-# The reviewed configuration changes disk layout. Never switch an unmigrated VM.
-if ! ssh -J "$jump" "$target" 'test "$(findmnt -n -o FSTYPE /)" = tmpfs && test -d /persist/databases/omega-1'; then
-  echo "Guest $node is not yet migrated to the impermanent layout." >&2
-  echo 'Perform the migration in docs/guides/impermanence.md (nixos-flake) before enabling deployments.' >&2
-  exit 1
-fi
+# Reuse the guest's existing read-only Forgejo identity, without exporting its key.
+# Git fetches run through it; lock resolution and system builds stay on the runner.
+export SOURCE_JUMP="$jump" SOURCE_TARGET="deploy@$host"
+export GIT_SSH_COMMAND="bash $PWD/../scripts/source-ssh.sh"
+export GIT_SSH_VARIANT=ssh
+cp flake.lock ../deployment/base-flake.lock
 python3 - "$input" "$PINS_REVISION" <<'PY'
 import re
 import sys
@@ -43,22 +43,26 @@ text, count = re.subn(rf'({input_name}\.url = "github:TensaminDev/Production-Pin
 assert count == 1
 path.write_text(text)
 PY
-# Transfer the reviewed GitHub checkout. Private GitHub credentials stay on Actions.
-remote=$(ssh -J "$jump" "$target" 'mktemp -d /var/tmp/tensamin-deploy.XXXXXXXXXX')
-[[ $remote =~ ^/var/tmp/tensamin-deploy\.[a-zA-Z0-9]{10}$ ]]
-trap 'ssh -J "$jump" "$target" "sudo -n rm -rf -- $remote"' EXIT
-git archive HEAD | ssh -J "$jump" "$target" "tar -x -C $remote"
-scp -o "ProxyJump=$jump" flake.nix "$target:$remote/flake.nix"
-ssh -J "$jump" "$target" "sudo -n bash -s -- $remote $node $input" < ../scripts/update-server.sh
-scp -o "ProxyJump=$jump" "$target:$remote/flake.lock" flake.lock
-if [[ $CHANNEL == canary ]]; then
-  jq -n --arg pins "$PINS_REVISION" --arg infrastructure "$base" \
-    '{pins: $pins, infrastructure: $infrastructure}' > ../deployment/manifest.json
-fi
+nix flake update "$input"
+python3 ../scripts/check-infrastructure-lock.py ../deployment/base-flake.lock flake.lock "$input" "$PINS_REVISION"
+# Evaluate and build only the selected existing VM, with the resolved lock frozen.
+nix build --no-update-lock-file --no-link ".#nixosConfigurations.$node.config.system.build.toplevel"
 # Persist only this channel's lock change. Do not silently overwrite concurrent edits.
 git add flake.lock flake.nix
 if ! git diff --cached --quiet; then
   git -c user.name=tensamin-deploy -c user.email=tensamin-deploy@users.noreply.github.com \
     commit -m "Update $CHANNEL pins to $PINS_REVISION"
-  git -c credential.helper='!gh auth git-credential' push https://github.com/nonanium/NixOS-Flake.git HEAD:main
 fi
+# Push even when the pin was already desired. A concurrent main update must fail
+# before activation, and an unchanged checkout must not create an empty commit.
+git -c credential.helper='!gh auth git-credential' push https://github.com/nonanium/NixOS-Flake.git HEAD:main
+revision=$(git rev-parse HEAD)
+remote_revision=$(git -c credential.helper='!gh auth git-credential' ls-remote https://github.com/nonanium/NixOS-Flake.git refs/heads/main)
+[[ ${remote_revision%%$'\t'*} == "$revision" ]]
+[[ -z $(git status --porcelain) ]]
+nix run --no-update-lock-file .#tensamin -- deploy --channel "$CHANNEL"
+[[ $(git rev-parse HEAD) == "$revision" ]]
+[[ -z $(git status --porcelain) ]]
+# The CLI verifies tensamin-registry.service before returning success.
+jq -n --arg pins "$PINS_REVISION" --arg infrastructure "$revision" \
+  '{pins: $pins, infrastructure: $infrastructure}' > ../deployment/manifest.json

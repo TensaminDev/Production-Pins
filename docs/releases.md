@@ -7,8 +7,11 @@ an immutable `canary-RUN-SHA` prerelease. Its web build is deployed to
 `https://tensamin-canary.pages.dev` before publication.
 
 Run **Deploy Stable** manually on the same `main` commit to promote it. Stable
-requires a successful Canary workflow for exactly that SHA and the existing
-infrastructure compatibility check. It rebuilds the same locked sources with
+requires a successful Canary workflow for exactly that SHA. Before editing its
+own pin, Stable requires infrastructure `main` to match the resulting infrastructure
+commit recorded by that Canary deployment exactly. Any intervening infrastructure
+commit, including another channel's pin update, requires a new Canary run.
+Stable rebuilds the same locked sources with
 Stable branding and application IDs, deploys Stable, and publishes a normal
 `stable-RUN-SHA` release. The Stable web app is deployed to
 `https://tensamin-stable.pages.dev`. Builds never refresh application dependency pins.
@@ -18,6 +21,71 @@ run fails; manually dispatch a new run instead. Release sequences and Android
 version codes are `1000000000 + github.run_number`, independently increasing for
 each channel. Keep workflow names and counters stable. APK upgrades require the
 same signing certificate as the installed APK.
+
+## Infrastructure deployment
+
+Both channels update existing VMs only. Canary selects `canary-pins` and
+`tensamin-canary`; Stable selects `prod-pins` and `tensamin-prod`. They do not
+deploy hosts, provision guests or change VM capacity. The existing shared
+`tensamin-deployment` concurrency group serializes channel workflows.
+
+The deployment job checks out infrastructure `main` from
+`nonanium/NixOS-Flake`, edits only the selected pin URL to the current
+Production-Pins commit, then runs `nix flake update INPUT` on the runner.
+It rejects changes to unrelated root inputs and their locked dependencies,
+including shared nodes still used by the other channel. The selected lock must
+resolve to the requested Production-Pins commit. The comparison follows the
+resolved dependency graph, so Nix's incidental lock-node renames are allowed.
+
+CI builds only the selected VM's system with `--no-update-lock-file`, commits the
+pin and lock changes if necessary, then pushes normally to infrastructure
+`main`. A rejected push stops deployment. If the desired pin and lock are already
+committed, CI uses that existing commit without creating an empty commit.
+After confirming the remote SHA, it runs the infrastructure CLI from the clean,
+pushed checkout:
+
+```sh
+nix run --no-update-lock-file .#tensamin -- deploy --channel canary
+# Stable uses --channel stable.
+```
+
+The CLI deploys the current lock without updating it and checks the target's
+`tensamin-registry.service`. Only after the CLI returns success does CI write
+`deployment/manifest.json`, containing `pins` and `infrastructure` with the actual
+Production-Pins and resulting infrastructure commit SHAs. Each channel uploads
+its `CHANNEL-deployment` artifact. Stable downloads the manifest from the
+successful Canary workflow selected for its current Production-Pins commit.
+Canary must finish the complete workflow successfully before Stable can use it.
+
+A failure after the infrastructure push leaves the committed desired state on
+`main`, but does not produce a new success record. Fix the cause and dispatch a
+new Canary run. A successful deployment does not imply publication succeeded;
+Pages and release publication still run afterward.
+
+### Deployment access
+
+Both GitHub environments use the existing deployment configuration:
+
+- `INFRASTRUCTURE_TOKEN` checks out and pushes infrastructure and supplies Nix's
+  GitHub read access. It must also be allowed to read any private GitHub inputs.
+- `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET` join the runner to the tailnet as
+  `tag:tensamin-deploy`.
+- `DEPLOY_SSH_KEY` accesses the selected guest through its inventory jump host.
+- `DEPLOY_KNOWN_HOSTS` is an environment variable containing reviewed SSH host
+  keys for both the jump host and selected VM, including nonstandard port forms.
+  Empty configuration fails and SSH uses strict host-key verification.
+
+The SSH Forgejo input uses the existing source-read strategy on the installed
+guest. `source-ssh.sh` routes Git's Forgejo SSH commands through the selected
+guest with passwordless sudo. That guest's declared SSH configuration selects
+`/run/secrets/forgejo-read` and verifies Forgejo's declared host key. The private
+read key stays on the guest. Lock resolution and system builds run locally in
+CI; no checkout or rebuilt lock is transferred from a remote rebuild.
+This requires a migrated, reachable guest with its existing read key installed.
+Other inputs retain their existing transport and access requirements.
+
+CI does not need private application decryption keys and does not run
+`secrets validate`. Runtime secrets decrypt on the target during activation.
 
 ## Signing configuration
 
