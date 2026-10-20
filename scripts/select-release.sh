@@ -13,9 +13,9 @@ for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDRO
   fi
 done
 [[ $IOTA_RELEASE_PUBLIC_KEY =~ ^[0-9a-f]{64}$ ]]
-tag="$CHANNEL-$GITHUB_RUN_NUMBER-${GITHUB_SHA:0:12}"
+tag="$CHANNEL-${GITHUB_SHA:0:7}"
 if draft=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null) && [[ $draft != true ]]; then
-  echo "Release $tag already exists. Dispatch a new run instead of replacing it." >&2
+  echo "Release $tag already exists. Publish a new commit instead of replacing it." >&2
   exit 1
 fi
 canary_run_id=""

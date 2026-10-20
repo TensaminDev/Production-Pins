@@ -3,7 +3,7 @@
 Every push to `main`, or manual Canary run, builds the committed source pins for
 Linux x86_64 and ARM64. The x86_64 build also signs the universal Android APK.
 Only after both builds and Canary deployment succeed does the workflow publish
-an immutable `canary-RUN-SHA` prerelease. Its web build is deployed to
+an immutable `canary-SHA` prerelease. Its web build is deployed to
 `https://tensamin-canary.pages.dev` before publication.
 
 Run **Deploy Stable** manually on the same `main` commit to promote it. Stable
@@ -13,14 +13,19 @@ commit recorded by that Canary deployment exactly. Any intervening infrastructur
 commit, including another channel's pin update, requires a new Canary run.
 Stable rebuilds the same locked sources with
 Stable branding and application IDs, deploys Stable, and publishes a normal
-`stable-RUN-SHA` release. The Stable web app is deployed to
+`stable-SHA` release. The Stable web app is deployed to
 `https://tensamin-stable.pages.dev`. Builds never refresh application dependency pins.
 
-Published releases are never silently replaced. Rerunning an already published
-run fails; manually dispatch a new run instead. Release sequences and Android
+Published releases are never silently replaced. Publishing the same channel and
+commit again fails; use a new commit for another release. Release sequences and Android
 version codes are `1000000000 + github.run_number`, independently increasing for
 each channel. Keep workflow names and counters stable. APK upgrades require the
 same signing certificate as the installed APK.
+
+Release names contain only the channel and seven SHA characters, for example
+`canary-e04f498`. The workflow run number is used only for internal update
+sequences and version codes. Provenance and signed metadata retain full commit identities.
+Existing tags keep their download URLs, while their display titles can be shortened.
 
 ## Infrastructure deployment
 
@@ -119,15 +124,18 @@ the web app is not deployed to a NixOS guest.
 
 ## Release assets
 
-Numbered releases include Linux Client AppImages, deb and rpm packages for both
+Commit-specific releases include Linux Client AppImages, deb and rpm packages for both
 architectures, one universal Android APK, Iota binaries and portable archives,
 and `iota-installer-linux-ARCH.zip`. `SHA256SUMS` and `release-provenance.json`
 record the downloaded artifacts and the Production-Pins commit.
 
-Iota's moving `canary` and `stable` releases contain only signed update manifests.
-They are excluded from GitHub Latest and the Obtainium title filters. Manifests
-expire after 90 days and reference immutable binary URLs. Publication refuses
-to regress or reuse a channel sequence. A transient manifest/signature mismatch
+The moving `canary` and `stable` releases mirror all assets from the latest
+commit-specific release, including the universal APK, Electron AppImage/deb/rpm packages
+for both architectures, Iota bundles, checksums and signed update manifests.
+Obsolete versioned client packages are removed after successful uploads.
+These channel releases are excluded from GitHub Latest and the Obtainium title
+filters. Manifests expire after 90 days and reference immutable binary URLs.
+Publication refuses to regress or reuse a channel sequence. A transient manifest/signature mismatch
 while those two assets upload is rejected; the next hourly check retries.
 
 The client has no built-in updater. Android users can use the docs' Obtainium
