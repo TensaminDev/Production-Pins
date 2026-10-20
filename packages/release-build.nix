@@ -25,8 +25,24 @@ pkgs.writeShellScript "release-build" ''
     tar -czf "$out/client-web.tar.gz" -C "$web" .
   fi
   work_root=$(mktemp -d)
-  trap 'rm -rf "$work_root"' EXIT
   work=$work_root/tensamin/client
+  cleanup() {
+    local status=$?
+    trap - EXIT
+    if [[ $arch == x86_64 && -n ''${RELEASE_WORK:-} && -f $work/apps/tauri/src-tauri/gen/android/gradlew ]]; then
+      # Re-enter the SDK's scoped GRADLE_USER_HOME, not a user's global daemon.
+      if ! nix develop --impure --no-update-lock-file --expr "import $root/packages/release-environment.nix { root = builtins.toPath \"$root\"; kind = \"tauri\"; }" \
+        --command bash "$work/apps/tauri/src-tauri/gen/android/gradlew" --stop >/dev/null 2>&1; then
+        printf 'Could not stop Gradle cleanly; retrying workspace cleanup.\n' >&2
+      fi
+    fi
+    for _attempt in 1 2 3; do
+      if rm -rf "$work_root"; then exit "$status"; fi
+      sleep 1
+    done
+    exit 1
+  }
+  trap cleanup EXIT
   mkdir -p "$work"
   mtp_source=$(nix eval --impure --raw --expr "(builtins.getFlake \"$root\").inputs.mtp.outPath")
   cp -r "$mtp_source" "$work_root/mtp"
