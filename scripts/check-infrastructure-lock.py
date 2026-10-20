@@ -25,6 +25,10 @@ def resolve(lock, reference):
 
 
 def same_graph(old_reference, new_reference, seen=None):
+    # Preserve empty follows bindings without traversing every root input,
+    # including the channel this operation intentionally updates.
+    if old_reference == [] or new_reference == []:
+        return old_reference == new_reference
     if seen is None:
         seen = set()
     old_name = resolve(before, old_reference)
