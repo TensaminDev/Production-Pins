@@ -13,7 +13,7 @@ defaults:
     shell: bash
 jobs:
   select:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: ${{ inputs.channel }}
     outputs:
       tag: ${{ steps.release.outputs.tag }}
@@ -22,7 +22,7 @@ jobs:
       published_at: ${{ steps.release.outputs.published_at }}
       expires_at: ${{ steps.release.outputs.expires_at }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Select immutable release identity and check prerequisites
@@ -47,7 +47,7 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - runner: ubuntu-latest
+          - runner: ubuntu-24.04
             system: x86_64-linux
           - runner: ubuntu-24.04-arm
             system: aarch64-linux
@@ -61,7 +61,7 @@ jobs:
       EXPIRES_AT: ${{ needs.select.outputs.expires_at }}
       CHANNEL: ${{ inputs.channel }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@v31
@@ -83,14 +83,14 @@ jobs:
           IOTA_RELEASE_PUBLIC_KEY: ${{ vars.IOTA_RELEASE_PUBLIC_KEY }}
           RELEASE_SYSTEM: ${{ matrix.system }}
         run: nix develop --no-write-lock-file --command bash scripts/sign-release.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.system }}
           path: release/
           if-no-files-found: error
           retention-days: 90
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.system == 'x86_64-linux'
         with:
           name: channel-web
@@ -101,10 +101,10 @@ jobs:
   deploy:
     needs: [select, build]
     if: ${{ !cancelled() && needs.select.result == 'success' && (needs.build.result == 'success' || (needs.build.result == 'skipped' && needs.select.outputs.publish == 'false')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: ${{ inputs.channel }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@v31
@@ -126,7 +126,7 @@ jobs:
             jq -e --arg sha "$GITHUB_SHA" '.pins == $sha' deployment/manifest.json
           fi
           echo "PINS_REVISION=$GITHUB_SHA" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: nonanium/NixOS-Flake
           ref: main
@@ -168,7 +168,7 @@ jobs:
           # use this repository's native token, accepted by TensaminDev's policy.
           export NIX_CONFIG="access-tokens = github.com=$NIX_GITHUB_TOKEN"
           bash scripts/deploy.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.channel }}-deployment
           path: deployment/manifest.json
@@ -182,13 +182,13 @@ jobs:
   web:
     needs: [select, build, deploy]
     if: needs.select.outputs.publish == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: ${{ inputs.channel }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: channel-web
           path: web-artifact
@@ -215,13 +215,13 @@ jobs:
   publish:
     needs: [select, build, deploy, web]
     if: needs.select.outputs.publish == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: ${{ inputs.channel }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: release
