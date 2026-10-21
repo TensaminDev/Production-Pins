@@ -1,7 +1,8 @@
 # Client and Iota releases
 
-Every push to `main`, or manual Canary run, builds the committed source pins for
-Linux x86_64 and ARM64. The x86_64 build also signs the universal Android APK.
+Every push to `main`, or manual Canary run, deploys the committed source pins.
+A channel/commit without a published release builds Linux x86_64 and ARM64;
+the x86_64 build also signs the universal Android APK.
 Only after both builds and Canary deployment succeed does the workflow publish
 an immutable `canary-SHA` prerelease. Its web build is deployed to
 `https://tensamin-canary.pages.dev` before publication.
@@ -16,8 +17,12 @@ Stable branding and application IDs, deploys Stable, and publishes a normal
 `stable-SHA` release. The Stable web app is deployed to
 `https://tensamin-stable.pages.dev`. Builds never refresh application dependency pins.
 
-Published releases are never silently replaced. Publishing the same channel and
-commit again fails; use a new commit for another release. Release sequences and Android
+Published releases are never silently replaced. A workflow rerun for an already
+published channel and full commit skips native builds, web deployment and
+publication. It redeploys infrastructure and records a fresh deployment manifest,
+so Canary can revalidate infrastructure changes without replacing downloads.
+Stable resolves the latest successful Canary manifest immediately before deployment.
+Release sequences and Android
 version codes are `1000000000 + github.run_number`, independently increasing for
 each channel. Keep workflow names and counters stable. APK upgrades require the
 same signing certificate as the installed APK.

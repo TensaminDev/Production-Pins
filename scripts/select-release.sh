@@ -14,11 +14,17 @@ for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDRO
 done
 [[ $IOTA_RELEASE_PUBLIC_KEY =~ ^[0-9a-f]{64}$ ]]
 tag="$CHANNEL-${GITHUB_SHA:0:7}"
-if draft=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null) && [[ $draft != true ]]; then
-  echo "Release $tag already exists. Publish a new commit instead of replacing it." >&2
-  exit 1
+publish=true
+if release=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft,targetCommitish --jq '[.isDraft, .targetCommitish] | @tsv' 2>/dev/null); then
+  IFS=$'\t' read -r draft target <<< "$release"
+  if [[ $draft != true ]]; then
+    [[ $target == "$GITHUB_SHA" ]] || {
+      echo "Release $tag belongs to a different full commit; refusing a short-hash collision." >&2
+      exit 1
+    }
+    publish=false
+  fi
 fi
-canary_run_id=""
 if [[ $CHANNEL == stable ]]; then
   canary_run_id=$(gh api --method GET \
     "repos/$GITHUB_REPOSITORY/actions/workflows/canary.yml/runs" \
@@ -33,8 +39,8 @@ published_at=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --j
 expires_at=$(date -u -d "$published_at +90 days" +%Y-%m-%dT%H:%M:%SZ)
 {
   echo "tag=$tag"
+  echo "publish=$publish"
   echo "sequence=$sequence"
   echo "published_at=$published_at"
   echo "expires_at=$expires_at"
-  echo "canary_run_id=$canary_run_id"
 } >> "$GITHUB_OUTPUT"

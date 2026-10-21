@@ -17,10 +17,10 @@ jobs:
     environment: ${{ inputs.channel }}
     outputs:
       tag: ${{ steps.release.outputs.tag }}
+      publish: ${{ steps.release.outputs.publish }}
       sequence: ${{ steps.release.outputs.sequence }}
       published_at: ${{ steps.release.outputs.published_at }}
       expires_at: ${{ steps.release.outputs.expires_at }}
-      canary_run_id: ${{ steps.release.outputs.canary_run_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +42,7 @@ jobs:
 
   build:
     needs: select
+    if: needs.select.outputs.publish == 'true'
     strategy:
       fail-fast: true
       matrix:
@@ -99,6 +100,7 @@ jobs:
 
   deploy:
     needs: [select, build]
+    if: ${{ !cancelled() && needs.select.result == 'success' && (needs.build.result == 'success' || (needs.build.result == 'skipped' && needs.select.outputs.publish == 'false')) }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.channel }}
     steps:
@@ -110,11 +112,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CHANNEL: ${{ inputs.channel }}
-          CANARY_RUN_ID: ${{ needs.select.outputs.canary_run_id }}
         run: |
           set -euo pipefail
           mkdir -p deployment
           if [[ $CHANNEL == stable ]]; then
+            CANARY_RUN_ID=$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/canary.yml/runs" \
+              -f head_sha="$GITHUB_SHA" -f status=success -f branch=main \
+              --jq '.workflow_runs | map(select(.head_sha == "'"$GITHUB_SHA"'" and .conclusion == "success")) | sort_by(.updated_at) | last | .id // empty')
             [[ $CANARY_RUN_ID =~ ^[0-9]+$ ]]
             gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANARY_RUN_ID" > deployment/run.json
             jq -e --arg sha "$GITHUB_SHA" '.conclusion == "success" and .head_sha == $sha and .head_branch == "main" and .path == ".github/workflows/canary.yml"' deployment/run.json
@@ -168,6 +172,7 @@ jobs:
         with:
           name: ${{ inputs.channel }}-deployment
           path: deployment/manifest.json
+          overwrite: true
           if-no-files-found: error
           retention-days: 90
       - name: Remove credentials
@@ -176,6 +181,7 @@ jobs:
 
   web:
     needs: [select, build, deploy]
+    if: needs.select.outputs.publish == 'true'
     runs-on: ubuntu-latest
     environment: ${{ inputs.channel }}
     steps:
@@ -208,6 +214,7 @@ jobs:
 
   publish:
     needs: [select, build, deploy, web]
+    if: needs.select.outputs.publish == 'true'
     runs-on: ubuntu-latest
     environment: ${{ inputs.channel }}
     steps:
