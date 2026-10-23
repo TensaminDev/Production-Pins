@@ -13,11 +13,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792637991,
-        "narHash": "sha256-ccMUxL8f2vNgphSI5xedBbrtkpJnSHoJlpHsPZY96pA=",
+        "lastModified": 1792760262,
+        "narHash": "sha256-tDNMjhb5kvPJCTKnMSHf2Wzpya4h2CuM4rhFEVeXNyM=",
         "owner": "TensaminDev",
         "repo": "Client",
-        "rev": "1f9f37e2e65291b91fd566e9b5ebeb798ab14e11",
+        "rev": "86182354c4f3f076a2f760fe31ccc5d240b74f24",
         "type": "github"
       },
       "original": {
@@ -74,11 +74,11 @@
     "mtp": {
       "flake": false,
       "locked": {
-        "lastModified": 1792399076,
-        "narHash": "sha256-F1g7/XJMMSTiTuimDvbNwz4vrOX884un0XBZLrlNkJo=",
+        "lastModified": 1792667038,
+        "narHash": "sha256-dux2RHrdIS9XZd/KYvCr0rjCNuSSk9NU7D7Ple3IENg=",
         "owner": "nonanium",
         "repo": "MTP",
-        "rev": "59a6daed4b9d330ce973fc47db090ff8f7c9bac0",
+        "rev": "c6126e4513cc53b0ea26fd755720491188a8f42c",
         "type": "github"
       },
       "original": {
@@ -195,11 +195,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792567368,
-        "narHash": "sha256-mrM+zFDRO1pI85t2SEq5R739BIq7Nv5XkFtVZK9nkZM=",
+        "lastModified": 1792739799,
+        "narHash": "sha256-M2rr/yPbTHvgAzCyZ+zHJHflFM0XU7t42Sw2skA3TQM=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "83dd732f2428827f35d997deae108a2ced5125f4",
+        "rev": "b0829a2cc9f7b596583331d78a942c1e5170d8a0",
         "type": "github"
       },
       "original": {
