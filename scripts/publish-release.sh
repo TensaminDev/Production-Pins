@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ $CHANNEL == canary || $CHANNEL == stable ]]
+type_maps=$(nix eval --impure --raw --expr "(builtins.getFlake \"$PWD\").inputs.mtp-type-maps.outPath")
+version=$(sed -n 's/^protocol_version: "\([^"]*\)"$/\1/p' "$type_maps/type-maps.yaml")
+[[ -n $version ]]
 cd release
 # Validate the merged native builds before making any public release.
 for arch in x86_64 aarch64; do
@@ -13,12 +16,12 @@ for arch in x86_64 aarch64; do
     [[ $(stat -c %s "$name") == "$size" ]]
   done < <(jq -r '.artifacts[] | [.url | split("/")[-1]] + [.sha256, (.size | tostring)] | @tsv' "iota-update-linux-$arch.json")
 done
-test -s "Tensamin-$RELEASE_TAG.apk"
+test -s Tensamin.apk
 previous_clients=()
 if gh release view "$CHANNEL" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' > channel-assets.txt 2>/dev/null; then
   while IFS= read -r asset; do
     case "$asset" in
-      Tensamin-*.apk|Tensamin-*.AppImage|Tensamin-*.deb|Tensamin-*.rpm)
+      Tensamin.apk|Tensamin-*.apk|Tensamin-*.AppImage|Tensamin-*.deb|Tensamin-*.rpm)
         previous_clients+=("$asset")
         ;;
     esac
@@ -52,14 +55,14 @@ if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --j
 fi
 rm -f draft-state.txt
 gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-  --title "$RELEASE_TAG" --notes "Client and Iota $CHANNEL release from [${GITHUB_SHA:0:7}](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)." \
+  --title "$version $RELEASE_TAG" --notes "Client and Iota $CHANNEL release from [${GITHUB_SHA:0:7}](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)." \
   --draft --prerelease="$prerelease" --latest=false
 gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" -- *
 gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false \
   --prerelease="$prerelease" --latest="$([[ $CHANNEL == stable ]] && echo true || echo false)"
 if ! gh release view "$CHANNEL" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
   gh release create "$CHANNEL" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-    --title "$CHANNEL" --notes "Client and Iota $CHANNEL downloads." \
+    --title "$version $CHANNEL" --notes "Client and Iota $CHANNEL downloads." \
     --prerelease="$prerelease" --latest=false
 fi
 gh release upload "$CHANNEL" --repo "$GITHUB_REPOSITORY" --clobber -- *
@@ -70,5 +73,6 @@ for asset in "${previous_clients[@]}"; do
   fi
 done
 gh release edit "$CHANNEL" --repo "$GITHUB_REPOSITORY" \
+  --title "$version $CHANNEL" \
   --notes "Latest Client and Iota $CHANNEL downloads from [${GITHUB_SHA:0:7}](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA). Immutable release: [$RELEASE_TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$RELEASE_TAG)." \
   --prerelease="$prerelease" --latest=false

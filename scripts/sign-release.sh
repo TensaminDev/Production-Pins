@@ -30,8 +30,14 @@ for binary in iota iota-daemon iota-updater; do
   cp "build-output/$binary-linux-$arch" release/
 done
 cp "build-output/iota-portable-linux-$arch.tar.gz" release/
-cp build-output/*.AppImage build-output/*.deb build-output/*.rpm release/
-cp "build-output/electron-release-metadata-$arch.json" release/
+metadata="electron-release-metadata-$arch.json"
+while IFS=$'\t' read -r old_name new_name; do
+  cp "build-output/$old_name" "release/$new_name"
+done < <(jq -r '.artifacts[] | [.name, ("Tensamin-" + .arch + "." + (.name | split(".") | last))] | @tsv' "build-output/$metadata")
+jq '.artifacts |= map(
+  .name = ("Tensamin-" + .arch + "." + (.name | split(".") | last))
+  | .url = ((.url | split("/") | .[:-1] | join("/")) + "/" + (.name | @uri))
+)' "build-output/$metadata" > "release/$metadata"
 if [[ $arch == x86_64 ]]; then
-  cp "build-output/Tensamin-$RELEASE_TAG.apk" release/
+  cp "build-output/Tensamin-$RELEASE_TAG.apk" release/Tensamin.apk
 fi
