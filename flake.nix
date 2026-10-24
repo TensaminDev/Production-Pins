@@ -22,10 +22,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
       inputs.type-maps.follows = "mtp-type-maps";
-      inputs.iota = {
-        url = "github:TensaminDev/Iota/main";
-        flake = false;
-      };
+      # Keep Omega's identity crate at its own Cargo.lock-compatible Iota pin.
     };
     client = {
       url = "github:TensaminDev/Client/dev";
