@@ -20,7 +20,8 @@ bash "$contract/scripts/build-update-manifest.sh" "$binary_directory" \
 public_key=$("$binary_directory/iota-release" sign "$manifest" "$manifest.sig")
 [[ $public_key == "$IOTA_RELEASE_PUBLIC_KEY" ]]
 product_version=$(jq -er .product_version "$manifest")
-channel_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$CHANNEL/iota-update-linux-$arch.json"
+# Existing Iota installers require this URL. GitHub redirects it after the repo move.
+channel_url="https://github.com/TensaminDev/Production-Pins/releases/download/$CHANNEL/iota-update-linux-$arch.json"
 bundle="$PWD/release/iota-installer-linux-$arch.zip"
 bash "$contract/scripts/build-release-bundle.sh" "$binary_directory" "$product_version" \
   "$manifest" "$channel_url" "$public_key" "$channel_url.sig" "$CHANNEL" primary "$bundle"
